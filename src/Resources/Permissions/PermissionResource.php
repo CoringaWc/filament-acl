@@ -366,7 +366,10 @@ class PermissionResource extends Resource
                 $nodes,
             ));
 
+            $sectionIcon = static::resolveResourceSectionIcon($nodes);
+
             $sections[] = Section::make($sectionLabel)
+                ->icon($sectionIcon)
                 ->schema([
                     Tabs::make('resource_section_' . Str::slug($sectionLabel))
                         ->tabs($tabs),
@@ -470,24 +473,28 @@ class PermissionResource extends Resource
                 ]);
         }
 
-        return [
-            Tab::make($node['label'])
-                ->schema(array_values(array_filter([
-                    Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
-                        ->schema([
-                            static::makePermissionCheckboxList(
-                                statePath: $node['state_path'],
-                                options: $node['options'],
-                            ),
-                        ])
-                        ->columnSpanFull(),
-                    $childTabs !== []
-                        ? Tabs::make('resource_children_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
-                            ->tabs($childTabs)
-                            ->columnSpanFull()
-                        : null,
-                ]))),
-        ][0];
+        $tab = Tab::make($node['label'])
+            ->schema(array_values(array_filter([
+                Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
+                    ->schema([
+                        static::makePermissionCheckboxList(
+                            statePath: $node['state_path'],
+                            options: $node['options'],
+                        ),
+                    ])
+                    ->columnSpanFull(),
+                $childTabs !== []
+                    ? Tabs::make('resource_children_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
+                        ->tabs($childTabs)
+                        ->columnSpanFull()
+                    : null,
+            ])));
+
+        if (isset($node['icon']) && $node['icon'] !== null) {
+            $tab->icon($node['icon']);
+        }
+
+        return $tab;
     }
 
     /**
@@ -517,6 +524,7 @@ class PermissionResource extends Resource
                 'owner_class' => $resourceRegistration->ownerClass,
                 'registration_key' => $resourceRegistration->registrationKey,
                 'label' => $resourceRegistration->label ?? static::resolveOwnerLabel($resourceRegistration),
+                'icon' => static::resolveResourceNodeIcon($resourceRegistration->ownerClass),
                 'section_label' => $resourceRegistration->sectionLabel ?? static::resolveResourceSectionLabel($resourceRegistration->ownerClass),
                 'state_path' => static::makePermissionStatePath(
                     'resources',
@@ -585,6 +593,48 @@ class PermissionResource extends Resource
             is_string($navigationGroup) => $navigationGroup,
             default => __('filament-acl::filament-acl.resources.permissions.groups.resources'),
         };
+    }
+
+    /**
+     * Resolve the icon for a permission section based on the first resource in the group.
+     *
+     * Checks: Cluster icon > Navigation group enum HasIcon > null.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     */
+    protected static function resolveResourceSectionIcon(array $nodes): string|BackedEnum|Htmlable|null
+    {
+        $firstNode = $nodes[0] ?? null;
+
+        if ($firstNode === null) {
+            return null;
+        }
+
+        $resourceClass = $firstNode['owner_class'];
+
+        $cluster = $resourceClass::getCluster();
+
+        if (($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
+            return $cluster::getNavigationIcon();
+        }
+
+        $navigationGroup = $resourceClass::getNavigationGroup();
+
+        if ($navigationGroup instanceof HasIcon) {
+            return $navigationGroup->getIcon();
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the icon for a resource node tab.
+     *
+     * @param  class-string<Resource>  $resourceClass
+     */
+    protected static function resolveResourceNodeIcon(string $resourceClass): string|BackedEnum|Htmlable|null
+    {
+        return $resourceClass::getNavigationIcon();
     }
 
     protected static function makePermissionCheckboxList(string $statePath, array $options): CheckboxList

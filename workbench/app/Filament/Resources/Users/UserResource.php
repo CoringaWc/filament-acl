@@ -15,6 +15,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,6 +33,28 @@ class UserResource extends Resource
     use HasResourcePermissions;
 
     protected static ?string $model = User::class;
+
+    protected static ?Heroicon $navigationIcon = Heroicon::OutlinedUsers;
+
+    public static function getModelLabel(): string
+    {
+        return __('workbench::workbench.resources.users.model_label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('workbench::workbench.resources.users.plural_model_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('workbench::workbench.resources.users.navigation_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('workbench::workbench.resources.users.navigation_group');
+    }
 
     public static function form(Schema $schema): Schema
     {

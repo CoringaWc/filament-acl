@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Workbench\App\Filament\Resources\ModerationPosts\Pages\ListPosts;
@@ -21,6 +22,28 @@ class PostResource extends Resource
     use HasResourcePermissions;
 
     protected static ?string $model = Post::class;
+
+    protected static ?Heroicon $navigationIcon = Heroicon::OutlinedShieldCheck;
+
+    public static function getModelLabel(): string
+    {
+        return __('workbench::workbench.resources.moderation_posts.model_label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('workbench::workbench.resources.moderation_posts.plural_model_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('workbench::workbench.resources.moderation_posts.navigation_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('workbench::workbench.resources.moderation_posts.navigation_group');
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -15,6 +15,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Workbench\App\Filament\Resources\Categories\Pages\CreateCategory;
@@ -29,6 +30,28 @@ class CategoryResource extends Resource
     use HasResourcePermissions;
 
     protected static ?string $model = Category::class;
+
+    protected static ?Heroicon $navigationIcon = Heroicon::OutlinedTag;
+
+    public static function getModelLabel(): string
+    {
+        return __('workbench::workbench.resources.categories.model_label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('workbench::workbench.resources.categories.plural_model_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('workbench::workbench.resources.categories.navigation_label');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('workbench::workbench.resources.categories.navigation_group');
+    }
 
     public static function form(Schema $schema): Schema
     {
