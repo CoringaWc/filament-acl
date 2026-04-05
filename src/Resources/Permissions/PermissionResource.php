@@ -602,7 +602,7 @@ class PermissionResource extends Resource
      *
      * @param  array<int, array<string, mixed>>  $nodes
      */
-    protected static function resolveResourceSectionIcon(array $nodes): string|BackedEnum|Htmlable|null
+    protected static function resolveResourceSectionIcon(array $nodes): string | BackedEnum | Htmlable | null
     {
         $firstNode = $nodes[0] ?? null;
 
@@ -630,9 +630,9 @@ class PermissionResource extends Resource
     /**
      * Resolve the icon for a resource node tab.
      *
-     * @param  class-string<Resource>  $resourceClass
+     * @param  class-string<resource>  $resourceClass
      */
-    protected static function resolveResourceNodeIcon(string $resourceClass): string|BackedEnum|Htmlable|null
+    protected static function resolveResourceNodeIcon(string $resourceClass): string | BackedEnum | Htmlable | null
     {
         return $resourceClass::getNavigationIcon();
     }
