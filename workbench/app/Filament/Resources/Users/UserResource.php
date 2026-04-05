@@ -12,6 +12,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -36,11 +37,14 @@ class UserResource extends Resource
     {
         return $schema->components([
             TextInput::make('name')
+                ->label(__('workbench::workbench.resources.users.fields.name'))
                 ->required(),
             TextInput::make('email')
+                ->label(__('workbench::workbench.resources.users.fields.email'))
                 ->email()
                 ->required(),
             Select::make('roles')
+                ->label(__('workbench::workbench.resources.users.fields.roles'))
                 ->disabled(static fn (?User $record): bool => $record?->hasRole(Utils::getProtectedRoleName()) ?? false)
                 ->relationship(
                     name: 'roles',
@@ -79,10 +83,12 @@ class UserResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            TextEntry::make('name'),
-            TextEntry::make('email'),
+            TextEntry::make('name')
+                ->label(__('workbench::workbench.resources.users.fields.name')),
+            TextEntry::make('email')
+                ->label(__('workbench::workbench.resources.users.fields.email')),
             TextEntry::make('roles.name')
-                ->label('Roles')
+                ->label(__('workbench::workbench.resources.users.fields.roles'))
                 ->badge()
                 ->state(static fn (User $record): string => $record->roles
                     ->reject(static fn (Model $role): bool => Utils::isProtectedRole($role))
@@ -98,11 +104,13 @@ class UserResource extends Resource
             ->paginated(false)
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('workbench::workbench.resources.users.columns.name'))
                     ->searchable(),
                 TextColumn::make('email')
+                    ->label(__('workbench::workbench.resources.users.columns.email'))
                     ->searchable(),
                 TextColumn::make('visible_roles')
-                    ->label('Roles')
+                    ->label(__('workbench::workbench.resources.users.columns.roles'))
                     ->badge()
                     ->state(static fn (User $record): string => $record->roles
                         ->reject(static fn (Model $role): bool => Utils::isProtectedRole($role))
@@ -127,7 +135,7 @@ class UserResource extends Resource
     }
 
     /**
-     * @return array<string, class-string>
+     * @return array<string, PageRegistration>
      */
     public static function getPages(): array
     {

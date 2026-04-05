@@ -34,11 +34,14 @@ class CategoryResource extends Resource
     {
         return $schema->components([
             TextInput::make('name')
+                ->label(__('workbench::workbench.resources.categories.fields.name'))
                 ->required()
                 ->maxLength(255),
             Textarea::make('description')
+                ->label(__('workbench::workbench.resources.categories.fields.description'))
                 ->columnSpanFull(),
             Select::make('posts')
+                ->label(__('workbench::workbench.resources.categories.fields.posts'))
                 ->relationship('posts', 'title')
                 ->multiple()
                 ->preload()
@@ -50,10 +53,12 @@ class CategoryResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            TextEntry::make('name'),
-            TextEntry::make('description'),
+            TextEntry::make('name')
+                ->label(__('workbench::workbench.resources.categories.fields.name')),
+            TextEntry::make('description')
+                ->label(__('workbench::workbench.resources.categories.fields.description')),
             TextEntry::make('posts_list')
-                ->label('Posts')
+                ->label(__('workbench::workbench.resources.categories.fields.posts'))
                 ->state(static fn (Category $record): string => $record->posts->pluck('title')->join(', ')),
         ]);
     }
@@ -64,10 +69,13 @@ class CategoryResource extends Resource
             ->paginated(false)
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('workbench::workbench.resources.categories.columns.name'))
                     ->searchable(),
                 TextColumn::make('description')
+                    ->label(__('workbench::workbench.resources.categories.columns.description'))
                     ->limit(40),
                 TextColumn::make('posts_count')
+                    ->label(__('workbench::workbench.resources.categories.columns.posts_count'))
                     ->counts('posts')
                     ->badge(),
             ])

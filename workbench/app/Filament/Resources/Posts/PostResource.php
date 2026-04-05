@@ -36,23 +36,27 @@ class PostResource extends Resource
     {
         return $schema->components([
             Select::make('user_id')
-                ->label('Author')
+                ->label(__('workbench::workbench.resources.posts.fields.author'))
                 ->options(User::query()->pluck('name', 'id')->all())
                 ->searchable()
                 ->required(),
             TextInput::make('title')
+                ->label(__('workbench::workbench.resources.posts.fields.title'))
                 ->required()
                 ->maxLength(255),
             TextInput::make('status')
+                ->label(__('workbench::workbench.resources.posts.fields.status'))
                 ->default('draft')
                 ->required(),
             Select::make('categories')
+                ->label(__('workbench::workbench.resources.posts.fields.categories'))
                 ->relationship('categories', 'name')
                 ->multiple()
                 ->preload()
                 ->searchable()
                 ->columnSpanFull(),
             Textarea::make('content')
+                ->label(__('workbench::workbench.resources.posts.fields.content'))
                 ->columnSpanFull(),
         ]);
     }
@@ -61,12 +65,15 @@ class PostResource extends Resource
     {
         return $schema->components([
             TextEntry::make('user.name')
-                ->label('Author'),
-            TextEntry::make('title'),
-            TextEntry::make('status'),
-            TextEntry::make('content'),
+                ->label(__('workbench::workbench.resources.posts.fields.author')),
+            TextEntry::make('title')
+                ->label(__('workbench::workbench.resources.posts.fields.title')),
+            TextEntry::make('status')
+                ->label(__('workbench::workbench.resources.posts.fields.status')),
+            TextEntry::make('content')
+                ->label(__('workbench::workbench.resources.posts.fields.content')),
             TextEntry::make('categories_list')
-                ->label('Categories')
+                ->label(__('workbench::workbench.resources.posts.fields.categories'))
                 ->state(static fn (PostModel $record): string => $record->categories->pluck('name')->join(', ')),
         ]);
     }
@@ -77,13 +84,15 @@ class PostResource extends Resource
             ->paginated(false)
             ->columns([
                 TextColumn::make('title')
+                    ->label(__('workbench::workbench.resources.posts.columns.title'))
                     ->searchable(),
                 TextColumn::make('user.name')
-                    ->label('Author'),
+                    ->label(__('workbench::workbench.resources.posts.columns.author')),
                 TextColumn::make('status')
+                    ->label(__('workbench::workbench.resources.posts.columns.status'))
                     ->badge(),
                 TextColumn::make('categories_list')
-                    ->label('Categories')
+                    ->label(__('workbench::workbench.resources.posts.columns.categories'))
                     ->state(static fn (PostModel $record): string => $record->categories->pluck('name')->join(', '))
                     ->wrap(),
             ])

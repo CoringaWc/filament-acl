@@ -26,8 +26,10 @@ class PostResource extends Resource
     {
         return $schema->components([
             TextInput::make('title')
+                ->label(__('workbench::workbench.resources.moderation_posts.fields.title'))
                 ->disabled(),
             TextInput::make('status')
+                ->label(__('workbench::workbench.resources.moderation_posts.fields.status'))
                 ->disabled(),
         ]);
     }
@@ -35,8 +37,10 @@ class PostResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            TextEntry::make('title'),
-            TextEntry::make('status'),
+            TextEntry::make('title')
+                ->label(__('workbench::workbench.resources.moderation_posts.fields.title')),
+            TextEntry::make('status')
+                ->label(__('workbench::workbench.resources.moderation_posts.fields.status')),
         ]);
     }
 
@@ -46,8 +50,10 @@ class PostResource extends Resource
             ->paginated(false)
             ->columns([
                 TextColumn::make('title')
+                    ->label(__('workbench::workbench.resources.moderation_posts.columns.title'))
                     ->searchable(),
                 TextColumn::make('status')
+                    ->label(__('workbench::workbench.resources.moderation_posts.columns.status'))
                     ->badge(),
             ])
             ->recordActions([

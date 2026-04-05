@@ -21,12 +21,16 @@ class WorkbenchServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        config([
+            'permission.models.role' => Role::class,
+        ]);
     }
 
     public function boot(): void
     {
         App::setLocale(config('app.locale'));
+
+        $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'workbench');
 
         View::prependNamespace('filament-panels', __DIR__ . '/../../resources/views/vendor/filament-panels');
         View::addNamespace('workbench', __DIR__ . '/../../resources/views');

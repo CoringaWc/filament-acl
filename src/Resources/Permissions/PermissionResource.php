@@ -635,7 +635,7 @@ class PermissionResource extends Resource
                 continue;
             }
 
-            $options[$permission->getKey()] = Str::of($ability)->headline()->toString();
+            $options[$permission->getKey()] = static::resolveAbilityLabel($ability);
         }
 
         return $options;

@@ -31,6 +31,17 @@ return [
                 'resources' => 'Recursos',
                 'ungrouped' => 'Outros',
             ],
+            'actions' => [
+                'view_any'     => 'Ver todos',
+                'view'         => 'Visualizar',
+                'create'       => 'Criar',
+                'update'       => 'Atualizar',
+                'delete'       => 'Excluir',
+                'force_delete' => 'Excluir definitivamente',
+                'restore'      => 'Restaurar',
+                'replicate'    => 'Replicar',
+                'reorder'      => 'Reordenar',
+            ],
         ],
     ],
 ];
