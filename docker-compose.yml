@@ -1,7 +1,7 @@
 services:
   php:
     build:
-      context: ./docker/php
+      context: ./packages/workbench/docker/php
       dockerfile: Dockerfile
       args:
         WWWUSER: ${WWWUSER:-1000}
