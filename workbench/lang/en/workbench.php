@@ -6,43 +6,43 @@ return [
     'resources' => [
         'posts' => [
             'fields' => [
-                'author'     => 'Author',
-                'title'      => 'Title',
-                'status'     => 'Status',
+                'author' => 'Author',
+                'title' => 'Title',
+                'status' => 'Status',
                 'categories' => 'Categories',
-                'content'    => 'Content',
+                'content' => 'Content',
             ],
             'columns' => [
-                'title'      => 'Title',
-                'author'     => 'Author',
-                'status'     => 'Status',
+                'title' => 'Title',
+                'author' => 'Author',
+                'status' => 'Status',
                 'categories' => 'Categories',
             ],
         ],
         'moderation_posts' => [
-            'fields'  => ['title' => 'Title', 'status' => 'Status'],
+            'fields' => ['title' => 'Title', 'status' => 'Status'],
             'columns' => ['title' => 'Title', 'status' => 'Status'],
         ],
         'categories' => [
             'fields' => [
-                'name'        => 'Name',
+                'name' => 'Name',
                 'description' => 'Description',
-                'posts'       => 'Posts',
+                'posts' => 'Posts',
             ],
             'columns' => [
-                'name'        => 'Name',
+                'name' => 'Name',
                 'description' => 'Description',
                 'posts_count' => 'Posts Count',
             ],
         ],
         'users' => [
             'fields' => [
-                'name'  => 'Name',
+                'name' => 'Name',
                 'email' => 'Email',
                 'roles' => 'Roles',
             ],
             'columns' => [
-                'name'  => 'Name',
+                'name' => 'Name',
                 'email' => 'Email',
                 'roles' => 'Roles',
             ],
