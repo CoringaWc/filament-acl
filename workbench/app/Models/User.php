@@ -1,0 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Workbench\App\Models;
+
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
+
+class User extends Authenticatable implements FilamentUser
+{
+    use HasFactory;
+    use HasRoles;
+    use Notifiable;
+
+    protected string $guard_name = 'web';
+
+    protected $guarded = [];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return HasMany<Post, $this>
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+}

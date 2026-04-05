@@ -1,0 +1,234 @@
+<?php
+
+declare(strict_types=1);
+
+use CoringaWc\FilamentAcl\Support\Utils;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+return new class extends Migration
+{
+    public function up(): void
+    {
+        $teams = config('permission.teams');
+        $tableNames = config('permission.table_names');
+        $columnNames = config('permission.column_names');
+        $pivotRole = $columnNames['role_pivot_key'] ?? 'role_id';
+        $pivotPermission = $columnNames['permission_pivot_key'] ?? 'permission_id';
+
+        if (empty($tableNames)) {
+            throw new \RuntimeException('Error: config/permission.php not loaded. Run [php artisan config:clear] and try again.');
+        }
+
+        if ($teams && empty($columnNames['team_foreign_key'] ?? null)) {
+            throw new \RuntimeException('Error: team_foreign_key on config/permission.php not loaded. Run [php artisan config:clear] and try again.');
+        }
+
+        Schema::create($tableNames['permissions'], function (Blueprint $table): void {
+            $table->bigIncrements('id');
+
+            if ($this->shouldScopePermissionsByPanel()) {
+                $this->addPanelColumn($table);
+            }
+
+            $table->string('name');
+            $table->string('guard_name');
+            $table->timestamps();
+
+            $table->unique(
+                $this->shouldScopePermissionsByPanel()
+                    ? [$this->getPanelColumnName(), 'name', 'guard_name']
+                    : ['name', 'guard_name'],
+                $this->shouldScopePermissionsByPanel()
+                    ? 'permissions_panel_name_guard_name_unique'
+                    : 'permissions_name_guard_name_unique',
+            );
+        });
+
+        Schema::create($tableNames['roles'], function (Blueprint $table) use ($teams, $columnNames): void {
+            $table->bigIncrements('id');
+
+            if ($teams || config('permission.testing')) {
+                $teamForeignKey = $columnNames['team_foreign_key'];
+
+                $table->unsignedBigInteger($teamForeignKey)->nullable();
+                $table->index($teamForeignKey, 'roles_team_foreign_key_index');
+            }
+
+            if ($this->shouldScopeRolesByPanel()) {
+                $this->addPanelColumn($table);
+            }
+
+            $table->string('name');
+            $table->string('guard_name');
+            $table->timestamps();
+
+            if ($teams || config('permission.testing')) {
+                $uniqueColumns = [$columnNames['team_foreign_key'], 'name', 'guard_name'];
+
+                if ($this->shouldScopeRolesByPanel()) {
+                    array_splice($uniqueColumns, 1, 0, [$this->getPanelColumnName()]);
+                }
+
+                $table->unique($uniqueColumns, 'roles_team_name_guard_unique');
+
+                return;
+            }
+
+            $table->unique(
+                $this->shouldScopeRolesByPanel()
+                    ? [$this->getPanelColumnName(), 'name', 'guard_name']
+                    : ['name', 'guard_name'],
+                $this->shouldScopeRolesByPanel()
+                    ? 'roles_panel_name_guard_name_unique'
+                    : 'roles_name_guard_name_unique',
+            );
+        });
+
+        Schema::create($tableNames['model_has_permissions'], function (Blueprint $table) use ($tableNames, $columnNames, $pivotPermission, $teams): void {
+            $table->unsignedBigInteger($pivotPermission);
+            $table->string('model_type');
+            $this->addModelMorphKeyColumn($table, $columnNames['model_morph_key']);
+            $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_model_id_model_type_index');
+
+            $table->foreign($pivotPermission)
+                ->references('id')
+                ->on($tableNames['permissions'])
+                ->onDelete('cascade');
+
+            if ($teams) {
+                $table->unsignedBigInteger($columnNames['team_foreign_key']);
+                $table->index($columnNames['team_foreign_key'], 'model_has_permissions_team_foreign_key_index');
+                $table->primary(
+                    [$columnNames['team_foreign_key'], $pivotPermission, $columnNames['model_morph_key'], 'model_type'],
+                    'model_has_permissions_permission_model_type_primary',
+                );
+
+                return;
+            }
+
+            $table->primary(
+                [$pivotPermission, $columnNames['model_morph_key'], 'model_type'],
+                'model_has_permissions_permission_model_type_primary',
+            );
+        });
+
+        Schema::create($tableNames['model_has_roles'], function (Blueprint $table) use ($tableNames, $columnNames, $pivotRole, $teams): void {
+            $table->unsignedBigInteger($pivotRole);
+            $table->string('model_type');
+            $this->addModelMorphKeyColumn($table, $columnNames['model_morph_key']);
+            $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_roles_model_id_model_type_index');
+
+            $table->foreign($pivotRole)
+                ->references('id')
+                ->on($tableNames['roles'])
+                ->onDelete('cascade');
+
+            if ($teams) {
+                $table->unsignedBigInteger($columnNames['team_foreign_key']);
+                $table->index($columnNames['team_foreign_key'], 'model_has_roles_team_foreign_key_index');
+                $table->primary(
+                    [$columnNames['team_foreign_key'], $pivotRole, $columnNames['model_morph_key'], 'model_type'],
+                    'model_has_roles_role_model_type_primary',
+                );
+
+                return;
+            }
+
+            $table->primary(
+                [$pivotRole, $columnNames['model_morph_key'], 'model_type'],
+                'model_has_roles_role_model_type_primary',
+            );
+        });
+
+        Schema::create($tableNames['role_has_permissions'], function (Blueprint $table) use ($tableNames, $pivotRole, $pivotPermission): void {
+            $table->unsignedBigInteger($pivotPermission);
+            $table->unsignedBigInteger($pivotRole);
+
+            $table->foreign($pivotPermission)
+                ->references('id')
+                ->on($tableNames['permissions'])
+                ->onDelete('cascade');
+
+            $table->foreign($pivotRole)
+                ->references('id')
+                ->on($tableNames['roles'])
+                ->onDelete('cascade');
+
+            $table->primary([$pivotPermission, $pivotRole], 'role_has_permissions_permission_id_role_id_primary');
+        });
+
+        app('cache')
+            ->store(config('permission.cache.store') !== 'default' ? config('permission.cache.store') : null)
+            ->forget(config('permission.cache.key'));
+    }
+
+    public function down(): void
+    {
+        $tableNames = config('permission.table_names');
+
+        if (empty($tableNames)) {
+            throw new \RuntimeException('Error: config/permission.php not found and defaults could not be merged. Please publish the package configuration before proceeding, or drop the tables manually.');
+        }
+
+        Schema::dropIfExists($tableNames['role_has_permissions']);
+        Schema::dropIfExists($tableNames['model_has_roles']);
+        Schema::dropIfExists($tableNames['model_has_permissions']);
+        Schema::dropIfExists($tableNames['roles']);
+        Schema::dropIfExists($tableNames['permissions']);
+    }
+
+    protected function addPanelColumn(Blueprint $table): void
+    {
+        $panelColumnName = $this->getPanelColumnName();
+        $panelType = (string) config('filament-acl.database.panel_scope.type', 'string');
+        $panelLength = (int) config('filament-acl.database.panel_scope.length', 50);
+        $panelNullable = (bool) config('filament-acl.database.panel_scope.nullable', false);
+        $panelDefault = config('filament-acl.database.panel_scope.default', 'global');
+
+        if ($panelType !== 'string') {
+            throw new \RuntimeException("Unsupported panel column type [{$panelType}].");
+        }
+
+        $column = $table->string($panelColumnName, $panelLength);
+
+        if ($panelNullable) {
+            $column->nullable();
+        }
+
+        if ($panelDefault !== null) {
+            $column->default((string) $panelDefault);
+        }
+    }
+
+    protected function getPanelColumnName(): string
+    {
+        return (string) config('filament-acl.database.panel_scope.column', 'panel');
+    }
+
+    protected function shouldScopeRolesByPanel(): bool
+    {
+        return (bool) config('filament-acl.database.panel_scope.on_roles', false);
+    }
+
+    protected function shouldScopePermissionsByPanel(): bool
+    {
+        return (bool) config('filament-acl.database.panel_scope.on_permissions', false);
+    }
+
+    protected function addModelMorphKeyColumn(Blueprint $table, string $column): void
+    {
+        $configuredType = config('filament-acl.database.model_morph_key.type');
+        $type = is_string($configuredType) && filled($configuredType)
+            ? $configuredType
+            : Utils::detectMorphKeyType();
+        $length = Utils::getMorphKeyColumnLength();
+
+        match ($type) {
+            'uuid' => $table->uuid($column),
+            'ulid' => $table->ulid($column),
+            'string' => $table->string($column, $length),
+            default => $table->unsignedBigInteger($column),
+        };
+    }
+};

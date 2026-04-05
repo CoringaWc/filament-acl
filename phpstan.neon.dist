@@ -7,9 +7,16 @@ parameters:
     level: 4
     paths:
         - src
+        - tests
         - config
         - database
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
-
+    ignoreErrors:
+        -
+            identifier: trait.unused
+            path: src/Pages/Concerns/HasPagePermissions.php
+        -
+            identifier: trait.unused
+            path: src/Widgets/Concerns/HasWidgetPermissions.php

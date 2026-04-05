@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CoringaWc\FilamentAcl\Tests\Unit;
+
+use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
+use CoringaWc\FilamentAcl\Tests\TestCase;
+
+class DefaultPermissionActionRegistryTest extends TestCase
+{
+    public function test_it_returns_default_resource_actions_from_configuration(): void
+    {
+        $registry = $this->app->make(DefaultPermissionActionRegistry::class);
+
+        self::assertSame([
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+            'deleteAny',
+            'forceDelete',
+            'forceDeleteAny',
+            'restore',
+            'restoreAny',
+            'replicate',
+            'reorder',
+        ], $registry->forResource());
+    }
+
+    public function test_it_adds_relation_manager_specific_actions(): void
+    {
+        $registry = $this->app->make(DefaultPermissionActionRegistry::class);
+
+        self::assertContains('attach', $registry->forRelationManager());
+        self::assertContains('dissociateAny', $registry->forRelationManager());
+        self::assertContains('viewAny', $registry->forRelationManager());
+    }
+}

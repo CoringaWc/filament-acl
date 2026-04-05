@@ -1,0 +1,32 @@
+services:
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+      args:
+        WWWUSER: ${WWWUSER:-1000}
+        WWWGROUP: ${WWWGROUP:-1000}
+    working_dir: /var/www/html
+    user: "${WWWUSER:-1000}:${WWWGROUP:-1000}"
+    environment:
+      COMPOSER_HOME: /tmp/composer
+      COMPOSER_CACHE_DIR: /tmp/composer/cache
+      NPM_CONFIG_CACHE: /tmp/.npm
+      XDG_CACHE_HOME: /tmp/.cache
+      WORKBENCH_PORT: ${WORKBENCH_PORT:-8001}
+    ports:
+      - "${WORKBENCH_PORT:-8001}:${WORKBENCH_PORT:-8001}"
+    volumes:
+      - .:/var/www/html
+      - composer-cache:/tmp/composer/cache
+      - npm-cache:/tmp/.npm
+    command:
+      - sh
+      - -lc
+      - >
+        composer run bootstrap:workbench &&
+        exec php vendor/bin/testbench serve --host=0.0.0.0 --port=${WORKBENCH_PORT:-8001} --ansi
+
+volumes:
+  composer-cache:
+  npm-cache:

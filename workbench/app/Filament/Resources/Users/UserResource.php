@@ -1,0 +1,140 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Workbench\App\Filament\Resources\Users;
+
+use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
+use CoringaWc\FilamentAcl\Support\Utils;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Workbench\App\Filament\Resources\Users\Pages\EditUser;
+use Workbench\App\Filament\Resources\Users\Pages\ListUsers;
+use Workbench\App\Filament\Resources\Users\Pages\ViewUser;
+use Workbench\App\Filament\Resources\Users\RelationManagers\PostsRelationManager;
+use Workbench\App\Models\Role;
+use Workbench\App\Models\User;
+
+class UserResource extends Resource
+{
+    use HasResourcePermissions;
+
+    protected static ?string $model = User::class;
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextInput::make('name')
+                ->required(),
+            TextInput::make('email')
+                ->email()
+                ->required(),
+            Select::make('roles')
+                ->disabled(static fn (?User $record): bool => $record?->hasRole(Utils::getProtectedRoleName()) ?? false)
+                ->relationship(
+                    name: 'roles',
+                    titleAttribute: 'name',
+                    modifyQueryUsing: static fn (Builder $query): Builder => Utils::scopeRoleQueryToPanel(
+                        Utils::scopeVisibleRoles($query->orderBy('name')),
+                        Filament::getCurrentPanel()?->getId(),
+                    ),
+                )
+                ->getOptionLabelFromRecordUsing(static fn (Role $record): string => Str::headline($record->name))
+                ->multiple()
+                ->preload()
+                ->searchable()
+                ->loadStateFromRelationshipsUsing(static function (Select $component, User $record): void {
+                    $component->state(
+                        $record->roles()
+                            ->whereNotIn('id', Utils::getHiddenRoleIds(Filament::getCurrentPanel()?->getId()))
+                            ->pluck('id')
+                            ->all(),
+                    );
+                })
+                ->saveRelationshipsUsing(static function (Select $component, User $record, mixed $state): void {
+                    /** @var array<int, int|string> $roleIds */
+                    $roleIds = array_values(array_filter(is_array($state) ? $state : []));
+                    $mergedRoleIds = Utils::mergeHiddenRoleIds($record, $roleIds, Filament::getCurrentPanel()?->getId());
+
+                    $record->syncRoles(
+                        Role::query()
+                            ->whereKey($mergedRoleIds)
+                            ->get(),
+                    );
+                }),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextEntry::make('name'),
+            TextEntry::make('email'),
+            TextEntry::make('roles.name')
+                ->label('Roles')
+                ->badge()
+                ->state(static fn (User $record): string => $record->roles
+                    ->reject(static fn (Model $role): bool => Utils::isProtectedRole($role))
+                    ->pluck('name')
+                    ->map(static fn (string $name): string => Str::headline($name))
+                    ->join(', ')),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->paginated(false)
+            ->columns([
+                TextColumn::make('name')
+                    ->searchable(),
+                TextColumn::make('email')
+                    ->searchable(),
+                TextColumn::make('visible_roles')
+                    ->label('Roles')
+                    ->badge()
+                    ->state(static fn (User $record): string => $record->roles
+                        ->reject(static fn (Model $role): bool => Utils::isProtectedRole($role))
+                        ->pluck('name')
+                        ->map(static fn (string $name): string => Str::headline($name))
+                        ->join(', ')),
+            ])
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+            ]);
+    }
+
+    /**
+     * @return array<int, class-string>
+     */
+    public static function getRelations(): array
+    {
+        return [
+            PostsRelationManager::class,
+        ];
+    }
+
+    /**
+     * @return array<string, class-string>
+     */
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListUsers::route('/'),
+            'view' => ViewUser::route('/{record}'),
+            'edit' => EditUser::route('/{record}/edit'),
+        ];
+    }
+}

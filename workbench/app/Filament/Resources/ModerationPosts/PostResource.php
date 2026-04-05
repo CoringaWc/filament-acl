@@ -1,0 +1,68 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Workbench\App\Filament\Resources\ModerationPosts;
+
+use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Workbench\App\Filament\Resources\ModerationPosts\Pages\ListPosts;
+use Workbench\App\Filament\Resources\ModerationPosts\Pages\ViewPost;
+use Workbench\App\Models\Post;
+
+class PostResource extends Resource
+{
+    use HasResourcePermissions;
+
+    protected static ?string $model = Post::class;
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextInput::make('title')
+                ->disabled(),
+            TextInput::make('status')
+                ->disabled(),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextEntry::make('title'),
+            TextEntry::make('status'),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->paginated(false)
+            ->columns([
+                TextColumn::make('title')
+                    ->searchable(),
+                TextColumn::make('status')
+                    ->badge(),
+            ])
+            ->recordActions([
+                ViewAction::make(),
+            ]);
+    }
+
+    /**
+     * @return array<string, class-string>
+     */
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListPosts::route('/'),
+            'view' => ViewPost::route('/{record}'),
+        ];
+    }
+}

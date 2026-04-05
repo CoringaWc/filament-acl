@@ -1,73 +1,91 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "coringawc/filament-acl",
+    "description": "Contextual permissions for Filament resources, relation managers, and actions.",
     "keywords": [
-        ":vendor_name",
+        "coringawc",
         "laravel",
-        "filamentphp",
         "filament",
         "filament-plugin",
-        ":package_slug"
+        "permissions",
+        "acl"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/coringawc/filament-acl",
     "support": {
-        "issues": "https://github.com/:vendor_slug/:package_slug/issues",
-        "source": "https://github.com/:vendor_slug/:package_slug"
+        "issues": "https://github.com/coringawc/filament-acl/issues",
+        "source": "https://github.com/coringawc/filament-acl"
     },
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Argemiro Dias",
+            "email": "argemirodiaseng@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.2",
         "filament/filament": "^5.0",
-        "filament/forms": "^5.0",
-        "filament/tables": "^5.0",
-        "spatie/laravel-package-tools": "^1.15.0"
+        "spatie/laravel-package-tools": "^1.15",
+        "spatie/laravel-permission": "^7.0"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.0",
         "nunomaduro/collision": "^8.0",
-        "orchestra/testbench": "^9.0|^10.0",
-        "pestphp/pest": "^3.7|^4.0",
-        "pestphp/pest-plugin-arch": "^3.0|^4.0",
-        "pestphp/pest-plugin-laravel": "^3.0|^4.0",
-        "pestphp/pest-plugin-livewire": "^3.0|^4.0",
-        "rector/rector": "^2.0",
-        "spatie/laravel-ray": "^1.26"
+        "orchestra/testbench": "^10.0",
+        "orchestra/workbench": "^10.0",
+        "phpunit/phpunit": "^12.0",
+        "rector/rector": "^2.0"
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "CoringaWc\\FilamentAcl\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/"
+            "CoringaWc\\FilamentAcl\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
         }
     },
     "scripts": {
-        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
-        "analyse": "phpstan analyse",
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "analyse": "phpstan analyse --memory-limit=1G",
         "lint": "pint",
         "refactor": "rector",
-        "test": "pest",
-        "test:lint": "pint --test",
-        "test:refactor": "rector --dry-run"
+        "test": "phpunit",
+        "test:types": "phpstan analyse --memory-limit=1G",
+        "test:refactor": "rector --dry-run",
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": [
+            "@php vendor/bin/testbench workbench:build --ansi",
+            "@php vendor/bin/testbench filament:assets --ansi"
+        ],
+        "bootstrap:workbench": [
+            "@build",
+            "@seed:workbench"
+        ],
+        "seed:workbench": "@php vendor/bin/testbench db:seed --class=Workbench\\\\Database\\\\Seeders\\\\DatabaseSeeder --ansi --no-interaction",
+        "fresh:workbench": "@php vendor/bin/testbench migrate:fresh --seed --seeder=Workbench\\\\Database\\\\Seeders\\\\DatabaseSeeder --ansi --no-interaction",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ]
     },
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "CoringaWc\\FilamentAcl\\FilamentPermissionServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "FilamentPermission": "CoringaWc\\FilamentAcl\\Facades\\FilamentPermission"
             }
         }
     },
@@ -75,7 +93,6 @@
         "sort-packages": true,
         "allow-plugins": {
             "composer/package-versions-deprecated": true,
-            "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
         }
     },
