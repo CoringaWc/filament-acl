@@ -958,6 +958,18 @@ class PermissionResource extends Resource
         };
     }
 
+    protected static function resolveAbilityLabel(string $ability): string
+    {
+        $translationKey = "filament-acl::filament-acl.permission_labels.{$ability}";
+        $translated = __($translationKey);
+
+        if ($translated !== $translationKey) {
+            return $translated;
+        }
+
+        return Str::headline($ability);
+    }
+
     /**
      * @template TReturn
      *
