@@ -69,7 +69,7 @@
         ],
         "bootstrap:workbench": [
             "@build",
-            "@seed:workbench"
+            "@fresh:workbench"
         ],
         "seed:workbench": "@php vendor/bin/testbench db:seed --class=Workbench\\\\Database\\\\Seeders\\\\DatabaseSeeder --ansi --no-interaction",
         "fresh:workbench": "@php vendor/bin/testbench migrate:fresh --seed --seeder=Workbench\\\\Database\\\\Seeders\\\\DatabaseSeeder --ansi --no-interaction",

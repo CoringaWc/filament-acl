@@ -17,6 +17,7 @@ use Filament\Forms\FormsServiceProvider;
 use Filament\Infolists\InfolistsServiceProvider;
 use Filament\Notifications\NotificationsServiceProvider;
 use Filament\Schemas\SchemasServiceProvider;
+use Filament\Support\Livewire\Partials\DataStoreOverride;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\ViewErrorBag;
 use Livewire\LivewireServiceProvider;
+use Livewire\Mechanisms\DataStore;
 use Orchestra\Testbench\Concerns\WithLaravelMigrations;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -48,6 +50,12 @@ abstract class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             static fn (string $modelName): string => 'Workbench\\Database\\Factories\\' . class_basename($modelName) . 'Factory',
         );
+
+        // Filament's SupportServiceProvider registers DataStore with bind() instead
+        // of singleton(), causing a new DataStoreOverride instance on every resolution.
+        // This breaks Livewire's WeakMap-based data store for full-page HTTP tests
+        // because set() and get() use different instances with different WeakMaps.
+        $this->app->singleton(DataStore::class, DataStoreOverride::class);
 
         $this->app['session.store']->start();
         $this->app['view']->share('errors', new ViewErrorBag);

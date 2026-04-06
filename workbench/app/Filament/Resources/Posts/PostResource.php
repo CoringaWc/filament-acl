@@ -33,7 +33,7 @@ class PostResource extends Resource
 
     protected static ?string $model = Post::class;
 
-    protected static ?Heroicon $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     public static function getModelLabel(): string
     {

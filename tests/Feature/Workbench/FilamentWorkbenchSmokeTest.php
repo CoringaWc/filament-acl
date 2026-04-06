@@ -164,7 +164,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
         $this->get(NestedCategoryPostResource::getUrl('create', ['category' => $category]))
             ->assertOk()
-            ->assertSee('Author');
+            ->assertSee('Autor');
     }
 
     public function test_it_can_publish_filament_assets_into_the_workbench_public_directory(): void

@@ -47,7 +47,7 @@ class PostsRelationManager extends RelationManager
     {
         return $schema->components([
             Select::make('user_id')
-                ->label('Author')
+                ->label(__('workbench::workbench.resources.posts.fields.author'))
                 ->options(User::query()->pluck('name', 'id')->all())
                 ->searchable()
                 ->required(),
@@ -70,7 +70,7 @@ class PostsRelationManager extends RelationManager
                 TextColumn::make('title')
                     ->searchable(),
                 TextColumn::make('user.name')
-                    ->label('Author'),
+                    ->label(__('workbench::workbench.resources.posts.columns.author')),
                 TextColumn::make('status')
                     ->badge(),
             ])

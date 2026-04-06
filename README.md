@@ -349,6 +349,18 @@ For header actions without a record:
 
 This keeps the policy contract explicit while still feeling like native Filament.
 
+## Subject Resolution Strategy
+
+The package provides a `SubjectResolutionStrategy` enum that defines how permission subjects are derived from owner classes:
+
+- `Basename` — uses the class basename without its suffix (default behavior)
+- `Fqcn` — uses the full namespace-qualified class name
+- `Custom` — delegates entirely to a custom callback
+
+This enum is available at `CoringaWc\FilamentAcl\Enums\SubjectResolutionStrategy`.
+
+> **Note:** Configuration integration for selecting the strategy via `config/filament-acl.php` is planned.
+
 ## Built-In Permissions Resource
 
 The package can register an internal role-management resource.
@@ -620,6 +632,16 @@ The package ships with:
 - `pt_BR`
 - `pt-BR`
 
+Translation keys cover:
+
+- resource labels, navigation, and breadcrumbs
+- permission entity type tabs
+- section group labels
+- section toggle actions (`Select All` / `Deselect All`)
+- ability labels including relation manager actions (`associate`, `attach`, `detach`, `dissociate`, and their `_any` variants)
+
+Ability labels are resolved through `filament-acl::filament-acl.permission_labels`. The resolver tries both `camelCase` and `snake_case` keys before falling back to `Str::headline()`.
+
 You can publish and customize them as usual through Laravel's vendor publishing workflow.
 
 ## Development
@@ -631,6 +653,7 @@ The workbench defaults to:
 - locale `pt_BR`
 - faker locale `pt_BR`
 - seeded demo resources, nested resources, pages, widgets, roles, and users
+- PHP CLI server with 4 workers for concurrent Livewire requests
 
 Demo users:
 
@@ -649,6 +672,8 @@ Then open:
 ```text
 http://localhost:8001/admin/login
 ```
+
+The workbench `.env` overrides `testbench.yaml` defaults for HTTP serving (file-based SQLite and file session driver). Tests continue using in-memory SQLite from `testbench.yaml`.
 
 ## Testing
 

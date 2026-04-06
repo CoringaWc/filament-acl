@@ -231,6 +231,32 @@ If yes, `Utils` is a good home.
 
 If a helper is purely local to one class, keep it local.
 
+## Translations
+
+The package uses `filament-acl::filament-acl.*` keys for all user-facing labels.
+
+Ability label resolution follows this chain:
+
+1. `permission_labels.{camelCase}` (e.g., `permission_labels.viewAny`)
+2. `permission_labels.{snake_case}` (e.g., `permission_labels.view_any`)
+3. `Str::headline($ability)` fallback
+
+When adding new abilities, add both camelCase and snake_case keys to `resources/lang/{locale}/filament-acl.php` under `permission_labels`.
+
+Section toggle labels live under `resources.permissions.edit.tabs.section_toggle`.
+
+## Subject Resolution Strategy
+
+`SubjectResolutionStrategy` is a backed enum at `CoringaWc\FilamentAcl\Enums\SubjectResolutionStrategy`.
+
+Values:
+
+- `Basename` — derive subject from class basename minus suffix
+- `Fqcn` — use the fully qualified class name
+- `Custom` — defer to a registered callback
+
+This enum is not yet integrated into the config. When implementing the integration, update `FluentSubjectResolver` to read the strategy from config and switch behavior accordingly.
+
 ## Workbench
 
 The workbench is not throwaway.
@@ -245,9 +271,16 @@ Current workbench goals:
 - nested resources
 - relation managers
 - page example
-- widget example
+- widget example (non-lazy for HTTP test compatibility)
 - built-in permissions resource enabled
 - seeded roles, users, and permissions
+
+Infrastructure notes:
+
+- `testbench.yaml` uses `:memory:` SQLite for tests; `workbench/.env` overrides to file-based SQLite and file session for `serve`
+- `docker-compose.yml` sets `PHP_CLI_SERVER_WORKERS=4` to handle concurrent Livewire requests
+- `testbench.yaml` provider names must use single quotes with single backslashes (YAML single-quote strings are literal)
+- `TestCase::setUp()` registers `DataStore` as singleton to work around Filament's `bind()` registration
 
 If you change runtime behavior, add or update workbench coverage rather than relying only on isolated unit tests.
 

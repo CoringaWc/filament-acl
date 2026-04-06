@@ -31,7 +31,7 @@ class CategoryResource extends Resource
 
     protected static ?string $model = Category::class;
 
-    protected static ?Heroicon $navigationIcon = Heroicon::OutlinedTag;
+    protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedTag;
 
     public static function getModelLabel(): string
     {

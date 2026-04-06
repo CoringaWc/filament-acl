@@ -15,6 +15,8 @@ class PostsOverviewWidget extends Widget
     use EnsuresValidationErrorBag;
     use HasWidgetPermissions;
 
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 1;
 
     protected string $view = 'workbench::filament.widgets.posts-overview-widget';

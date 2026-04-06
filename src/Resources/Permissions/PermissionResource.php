@@ -999,12 +999,17 @@ class PermissionResource extends Resource
 
     protected static function resolveOwnerLabel(PermissionOwnerRegistration $ownerRegistration): string
     {
+        $ownerClass = $ownerRegistration->ownerClass;
+
         return match ($ownerRegistration->ownerType) {
-            PermissionEntityType::Resource => Str::headline(Str::beforeLast(class_basename($ownerRegistration->ownerClass), 'Resource')),
-            PermissionEntityType::RelationManager => Str::headline(Str::beforeLast(class_basename($ownerRegistration->ownerClass), 'RelationManager')),
-            PermissionEntityType::Page => Str::headline(Str::beforeLast(class_basename($ownerRegistration->ownerClass), 'Page')),
-            PermissionEntityType::Widget => Str::headline(Str::beforeLast(class_basename($ownerRegistration->ownerClass), 'Widget')),
-            default => Str::headline(class_basename($ownerRegistration->ownerClass)),
+            PermissionEntityType::Resource => static::withOwnerConfigurationContext(
+                $ownerRegistration,
+                static fn (): string => $ownerClass::getModelLabel(),
+            ),
+            PermissionEntityType::RelationManager => Str::headline(Str::beforeLast(class_basename($ownerClass), 'RelationManager')),
+            PermissionEntityType::Page => Str::headline(Str::beforeLast(class_basename($ownerClass), 'Page')),
+            PermissionEntityType::Widget => Str::headline(Str::beforeLast(class_basename($ownerClass), 'Widget')),
+            default => Str::headline(class_basename($ownerClass)),
         };
     }
 
@@ -1015,6 +1020,13 @@ class PermissionResource extends Resource
 
         if ($translated !== $translationKey) {
             return $translated;
+        }
+
+        $snakeKey = 'filament-acl::filament-acl.permission_labels.' . Str::snake($ability);
+        $snakeTranslated = __($snakeKey);
+
+        if ($snakeTranslated !== $snakeKey) {
+            return $snakeTranslated;
         }
 
         return Str::headline($ability);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workbench\App\Providers;
 
 use CoringaWc\FilamentAcl\Policies\RolePolicy;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -29,6 +30,12 @@ class WorkbenchServiceProvider extends ServiceProvider
     public function boot(): void
     {
         App::setLocale(config('app.locale'));
+
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+
+        Factory::guessFactoryNamesUsing(
+            static fn (string $modelName): string => 'Workbench\\Database\\Factories\\' . class_basename($modelName) . 'Factory',
+        );
 
         $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'workbench');
 
