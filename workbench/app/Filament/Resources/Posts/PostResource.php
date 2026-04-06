@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Workbench\App\Enums\NavigationGroup;
 use Workbench\App\Filament\Resources\Posts\Pages\CreatePost;
 use Workbench\App\Filament\Resources\Posts\Pages\EditPost;
 use Workbench\App\Filament\Resources\Posts\Pages\ListPosts;
@@ -50,9 +51,9 @@ class PostResource extends Resource
         return __('workbench::workbench.resources.posts.navigation_label');
     }
 
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): \BackedEnum | string | null
     {
-        return __('workbench::workbench.resources.posts.navigation_group');
+        return NavigationGroup::Blog;
     }
 
     public static function form(Schema $schema): Schema

@@ -22,6 +22,7 @@ use Workbench\App\Filament\Livewire\Sidebar;
 use Workbench\App\Filament\Livewire\Topbar;
 use Workbench\App\Filament\Pages\ContentInsightsPage;
 use Workbench\App\Filament\Pages\Dashboard;
+use Workbench\App\Filament\Pages\Login;
 use Workbench\App\Filament\Widgets\PostsOverviewWidget;
 
 class AdminPanelProvider extends PanelProvider
@@ -32,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
             ->sidebarLivewireComponent(Sidebar::class)
             ->topbarLivewireComponent(Topbar::class)
             ->colors([
@@ -66,8 +67,6 @@ class AdminPanelProvider extends PanelProvider
             ->plugin(
                 FilamentAclPlugin::make()
                     ->permissionsResource()
-                    ->permissionsResourceNavigationLabel('Permissions')
-                    ->permissionsResourceNavigationGroup('Access Control')
                     ->permissionsResourceNavigationSort(50),
             );
     }

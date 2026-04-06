@@ -109,7 +109,8 @@ class UserResource extends Resource
             TextEntry::make('name')
                 ->label(__('workbench::workbench.resources.users.fields.name')),
             TextEntry::make('email')
-                ->label(__('workbench::workbench.resources.users.fields.email')),
+                ->label(__('workbench::workbench.resources.users.fields.email'))
+                ->copyable(),
             TextEntry::make('roles.name')
                 ->label(__('workbench::workbench.resources.users.fields.roles'))
                 ->badge()
@@ -131,6 +132,7 @@ class UserResource extends Resource
                     ->searchable(),
                 TextColumn::make('email')
                     ->label(__('workbench::workbench.resources.users.columns.email'))
+                    ->copyable()
                     ->searchable(),
                 TextColumn::make('visible_roles')
                     ->label(__('workbench::workbench.resources.users.columns.roles'))

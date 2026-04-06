@@ -205,7 +205,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
         $this->get(PermissionResource::getUrl('create', configuration: 'filament-acl-permissions'))
             ->assertOk()
-            ->assertSee('Access Control')
+            ->assertSee('Usuário')
             ->assertSee('Insights de Conteúdo')
             ->assertSee('Resumo de Posts')
             ->assertSee('Exportar conteúdo')

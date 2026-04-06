@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Workbench\App\Enums\NavigationGroup;
 use Workbench\App\Filament\Resources\Categories\Pages\CreateCategory;
 use Workbench\App\Filament\Resources\Categories\Pages\EditCategory;
 use Workbench\App\Filament\Resources\Categories\Pages\ListCategories;
@@ -48,9 +49,9 @@ class CategoryResource extends Resource
         return __('workbench::workbench.resources.categories.navigation_label');
     }
 
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): \BackedEnum | string | null
     {
-        return __('workbench::workbench.resources.categories.navigation_group');
+        return NavigationGroup::Blog;
     }
 
     public static function form(Schema $schema): Schema

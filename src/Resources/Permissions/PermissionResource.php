@@ -22,6 +22,9 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Panel;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
@@ -360,24 +363,10 @@ class PermissionResource extends Resource
         $resourceTree = static::buildResourceTree(static::getDiscoverableResourceNodes());
         $sections = [];
 
-        foreach ($resourceTree as $sectionLabel => $nodes) {
-            $tabs = array_values(array_map(
-                static fn (array $node): Tab => static::buildResourceNodeTab($node),
-                $nodes,
-            ));
-
-            $sectionIcon = static::resolveResourceSectionIcon($nodes);
-
-            $sections[] = Section::make($sectionLabel)
-                ->icon($sectionIcon)
-                ->schema([
-                    Tabs::make('resource_section_' . Str::slug($sectionLabel))
-                        ->tabs($tabs),
-                ])
-                ->columnSpanFull()
-                ->compact()
-                ->collapsible()
-                ->collapsed();
+        foreach ($resourceTree as $nodes) {
+            foreach ($nodes as $node) {
+                $sections[] = static::buildResourceNodeSection($node);
+            }
         }
 
         return $sections;
@@ -451,6 +440,64 @@ class PermissionResource extends Resource
         ksort($sections);
 
         return $sections;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     */
+    protected static function buildResourceNodeSection(array $node): Section
+    {
+        $permissionCount = static::countNodePermissions($node);
+
+        $childTabs = array_values(array_map(
+            static fn (array $childNode): Tab => static::buildResourceNodeTab($childNode),
+            $node['children'],
+        ));
+
+        foreach ($node['relation_managers'] as $relationManager) {
+            $childTabs[] = Tab::make($relationManager['label'])
+                ->schema([
+                    static::makePermissionCheckboxList(
+                        statePath: $relationManager['state_path'],
+                        options: $relationManager['options'],
+                    ),
+                ]);
+        }
+
+        $schema = [
+            Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
+                ->schema([
+                    static::makePermissionCheckboxList(
+                        statePath: $node['state_path'],
+                        options: $node['options'],
+                    ),
+                ])
+                ->columnSpanFull(),
+        ];
+
+        if ($childTabs !== []) {
+            $schema[] = Tabs::make('resource_node_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
+                ->tabs($childTabs)
+                ->columnSpanFull();
+        }
+
+        $section = Section::make($node['label'])
+            ->description(trans_choice(
+                'filament-acl::filament-acl.resources.permissions.section_description',
+                $permissionCount,
+                ['count' => $permissionCount],
+            ))
+            ->schema($schema)
+            ->columnSpanFull()
+            ->compact()
+            ->collapsible()
+            ->collapsed();
+
+        if (isset($node['icon']) && $node['icon'] !== null) {
+            $section->icon($node['icon']);
+        }
+
+        return $section;
     }
 
     /**
@@ -643,7 +690,6 @@ class PermissionResource extends Resource
             ->hiddenLabel()
             ->options($options)
             ->bulkToggleable()
-            ->searchable()
             ->columns(2)
             ->columnSpanFull();
     }
@@ -1070,6 +1116,24 @@ class PermissionResource extends Resource
     protected static function ownerDiscovery(): PermissionOwnerDiscovery
     {
         return app(PermissionOwnerDiscovery::class);
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     */
+    protected static function countNodePermissions(array $node): int
+    {
+        $count = count($node['options']);
+
+        foreach ($node['relation_managers'] as $rm) {
+            $count += count($rm['options']);
+        }
+
+        foreach ($node['children'] as $child) {
+            $count += static::countNodePermissions($child);
+        }
+
+        return $count;
     }
 
     /**

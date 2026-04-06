@@ -42,7 +42,7 @@ class PostResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('workbench::workbench.resources.moderation_posts.navigation_group');
+        return null;
     }
 
     public static function form(Schema $schema): Schema

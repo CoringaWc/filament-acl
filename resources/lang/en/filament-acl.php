@@ -35,6 +35,8 @@ return [
                 'select_all' => 'Select All',
                 'deselect_all' => 'Deselect All',
             ],
+            'section_description' => '1 permission|:count permissions',
+            'navigation_group' => 'Access Control',
         ],
     ],
 
