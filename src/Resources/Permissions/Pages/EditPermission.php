@@ -10,6 +10,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Contracts\Role as RoleContract;
+use Spatie\Permission\PermissionRegistrar;
 
 class EditPermission extends EditRecord
 {
@@ -53,6 +54,8 @@ class EditPermission extends EditRecord
 
         $record->update($data);
         $record->permissions()->sync($permissionIds);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return $record;
     }

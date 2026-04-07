@@ -8,6 +8,7 @@ use CoringaWc\FilamentAcl\Concerns\EnsuresValidationErrorBag;
 use CoringaWc\FilamentAcl\Resources\Permissions\PermissionResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\PermissionRegistrar;
 
 class CreatePermission extends CreateRecord
 {
@@ -33,6 +34,8 @@ class CreatePermission extends CreateRecord
 
         $record = static::getResource()::getModel()::query()->create($data);
         $record->permissions()->sync($permissionIds);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return $record;
     }
