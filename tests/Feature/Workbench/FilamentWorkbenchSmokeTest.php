@@ -232,7 +232,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
         ], configuration: 'filament-acl-permissions'))
             ->assertOk()
             ->assertSee('Posts')
-            ->assertSee('View Any')
+            ->assertSee(__('filament-acl::filament-acl.permission_labels.view_any'))
             ->assertSee('Insights de Conteúdo')
             ->assertSee('Resumo de Posts')
             ->assertDontSee(Utils::getProtectedRoleName());
