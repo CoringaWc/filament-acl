@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoringaWc\FilamentAcl\Support;
 
 use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
+use CoringaWc\FilamentAcl\FilamentAclPlugin;
 use Filament\Clusters\Cluster;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
@@ -272,8 +273,8 @@ class PermissionOwnerDiscovery
 
     protected function resolveResourceSectionLabel(Panel $panel, string $resourceClass, ?string $registrationKey = null): string
     {
-        $groupByCluster = (bool) config('filament-acl.resources.permissions.sections.group_by_cluster', true);
-        $groupByNavigationGroup = (bool) config('filament-acl.resources.permissions.sections.group_by_navigation_group', true);
+        $groupByCluster = $this->getPluginOption('usesGroupByCluster', true);
+        $groupByNavigationGroup = $this->getPluginOption('usesGroupByNavigationGroup', true);
 
         /** @var class-string<Cluster>|null $cluster */
         $cluster = $this->evaluateInPanel(
@@ -422,5 +423,17 @@ class PermissionOwnerDiscovery
         return array_values(
             Arr::keyBy($registrations, static fn (PermissionOwnerRegistration $registration): string => $registration->uniqueKey()),
         );
+    }
+
+    /**
+     * Resolve a plugin option via the fluent API, falling back to config when the plugin is not registered.
+     */
+    protected function getPluginOption(string $getter, mixed $default): mixed
+    {
+        try {
+            return FilamentAclPlugin::get()->{$getter}();
+        } catch (Throwable) {
+            return $default;
+        }
     }
 }

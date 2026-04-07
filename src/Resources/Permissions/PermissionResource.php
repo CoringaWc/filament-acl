@@ -424,7 +424,7 @@ class PermissionResource extends Resource
             $allStatePaths = static::collectAllNodeStatePaths($nodes);
             $sectionId = Str::slug($sectionLabel) . '_' . substr(md5($sectionLabel), 0, 8);
 
-            $isStandalone = static::isSectionStandalone($nodes);
+            $isStandalone = static::isSectionStandaloneByLabel($nodes);
 
             if ($isStandalone && count($nodes) === 1) {
                 $singleNode = $nodes[0];
@@ -458,8 +458,8 @@ class PermissionResource extends Resource
                 ->columnSpanFull()
                 ->compact()
                 ->collapsible()
-                ->collapsed((bool) config('filament-acl.resources.permissions.sections.collapsed', false))
-                ->persistCollapsed((bool) config('filament-acl.resources.permissions.sections.persist_collapsed', true))
+                ->collapsed(static::getPluginOption('usesSectionsCollapsed', false))
+                ->persistCollapsed(static::getPluginOption('usesSectionsPersistCollapsed', true))
                 ->afterHeader(fn (): array => [
                     static::buildGroupToggleAction('section_' . $sectionId, $allStatePaths),
                 ]);
@@ -475,11 +475,15 @@ class PermissionResource extends Resource
     }
 
     /**
-     * Determine if a section's nodes belong to standalone resources (no cluster, no navGroup).
+     * Determine if a section's nodes belong to standalone resources.
+     *
+     * A section is standalone when every node's section_label equals its own label,
+     * meaning Discovery did not group it under a cluster or navigation group.
+     * This avoids re-querying cluster/navGroup without panel context.
      *
      * @param  array<int, array<string, mixed>>  $nodes
      */
-    protected static function isSectionStandalone(array $nodes): bool
+    protected static function isSectionStandaloneByLabel(array $nodes): bool
     {
         $firstNode = $nodes[0] ?? null;
 
@@ -487,24 +491,7 @@ class PermissionResource extends Resource
             return true;
         }
 
-        $resourceClass = $firstNode['owner_class'];
-
-        $groupByCluster = (bool) config('filament-acl.resources.permissions.sections.group_by_cluster', true);
-        $groupByNavigationGroup = (bool) config('filament-acl.resources.permissions.sections.group_by_navigation_group', true);
-
-        $cluster = $resourceClass::getCluster();
-
-        if ($groupByCluster && ($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
-            return false;
-        }
-
-        $navigationGroup = $resourceClass::getNavigationGroup();
-
-        if ($groupByNavigationGroup && ($navigationGroup !== null)) {
-            return false;
-        }
-
-        return true;
+        return ($firstNode['section_label'] ?? '') === ($firstNode['label'] ?? '');
     }
 
     /**
@@ -791,7 +778,7 @@ class PermissionResource extends Resource
                 'registration_key' => $resourceRegistration->registrationKey,
                 'label' => $resourceRegistration->label ?? static::resolveOwnerLabel($resourceRegistration),
                 'icon' => static::resolveResourceNodeIcon($resourceRegistration->ownerClass),
-                'section_label' => $resourceRegistration->sectionLabel ?? static::resolveResourceSectionLabel($resourceRegistration->ownerClass),
+                'section_label' => $resourceRegistration->sectionLabel ?? $resourceRegistration->label ?? static::resolveOwnerLabel($resourceRegistration),
                 'state_path' => static::makePermissionStatePath(
                     'resources',
                     $resourceRegistration->ownerClass,
@@ -843,30 +830,16 @@ class PermissionResource extends Resource
         return $nodes;
     }
 
-    protected static function resolveResourceSectionLabel(string $resourceClass): string
+    /**
+     * Resolve a plugin option via the fluent API, falling back to config when the plugin is not registered.
+     */
+    protected static function getPluginOption(string $getter, mixed $default): mixed
     {
-        $groupByCluster = (bool) config('filament-acl.resources.permissions.sections.group_by_cluster', true);
-        $groupByNavigationGroup = (bool) config('filament-acl.resources.permissions.sections.group_by_navigation_group', true);
-
-        $cluster = $resourceClass::getCluster();
-
-        if ($groupByCluster && ($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
-            return $cluster::getNavigationLabel();
+        try {
+            return FilamentAclPlugin::get()->{$getter}();
+        } catch (\Throwable) {
+            return $default;
         }
-
-        $navigationGroup = $resourceClass::getNavigationGroup();
-        $navigationLabel = (string) $resourceClass::getNavigationLabel();
-
-        if ($groupByNavigationGroup && ($navigationGroup !== null)) {
-            return (string) match (true) {
-                $navigationGroup instanceof BackedEnum => $navigationGroup->value,
-                $navigationGroup instanceof UnitEnum => $navigationGroup->name,
-                is_string($navigationGroup) => $navigationGroup,
-                default => $navigationLabel,
-            };
-        }
-
-        return $navigationLabel;
     }
 
     /**
@@ -932,7 +905,7 @@ class PermissionResource extends Resource
             ->tabs($tabs)
             ->columnSpanFull();
 
-        if ((bool) config('filament-acl.resources.permissions.inner_tabs.vertical', false)) {
+        if (static::getPluginOption('usesInnerTabsVertical', false)) {
             $innerTabs->vertical();
         }
 

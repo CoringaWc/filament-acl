@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoringaWc\FilamentAcl\RelationManagers\Concerns;
 
 use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
+use CoringaWc\FilamentAcl\Attributes\PermissionPanel as PermissionPanelAttribute;
 use CoringaWc\FilamentAcl\Attributes\PermissionSubject as PermissionSubjectAttribute;
 use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
 use CoringaWc\FilamentAcl\Attributes\SharedPermissionOwner;
@@ -73,6 +74,17 @@ trait HasRelationManagerPermissions
         }
 
         return [];
+    }
+
+    public static function getPermissionPanel(): ?string
+    {
+        $attribute = PermissionAttributeReader::read(static::class, PermissionPanelAttribute::class);
+
+        if ($attribute !== null) {
+            return $attribute->panel;
+        }
+
+        return Filament::getCurrentPanel()?->getId();
     }
 
     public static function shouldUseRelatedResourcePermissions(): bool
@@ -168,7 +180,7 @@ trait HasRelationManagerPermissions
         ?string $registrationKey = null,
     ): PermissionAction {
         $resolvedRegistrationKey = $registrationKey ?? Filament::getCurrentResourceConfigurationKey();
-        $panelId = Filament::getCurrentPanel()?->getId();
+        $panelId = static::getPermissionPanel();
         $relatedResource = static::getRelatedResource();
         $permissionOwnerClass = static::resolvePermissionOwnerClass();
         $subject = app(ResolvesPermissionSubject::class)->resolve(

@@ -650,6 +650,129 @@ Frequently useful methods:
 - `Utils::resolveCustomPermissions(?string $panelId = null)`
 - `Utils::detectMorphKeyType(?string $userModelClass = null)`
 
+## PHP Attributes
+
+As an alternative to overriding methods, you can use PHP 8 attributes on your classes:
+
+```php
+<?php
+
+use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
+use CoringaWc\FilamentAcl\Attributes\PermissionPanel;
+use CoringaWc\FilamentAcl\Attributes\PermissionSubject;
+use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
+use CoringaWc\FilamentAcl\Attributes\SharedPermissionOwner;
+use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
+use Filament\Resources\Resource;
+
+#[PermissionSubject('custom-subject')]
+#[SharedPermissionOwner(CategoryResource::class)]
+#[CustomPermissionActions(['archive', 'export'])]
+#[RegisterPermissions(false)]
+#[PermissionPanel('admin')]
+class PostResource extends Resource
+{
+    use HasResourcePermissions;
+}
+```
+
+Attributes are read first. If an attribute is present, the corresponding method override is ignored. If no attribute is present, the method fallback runs as usual.
+
+Available attributes:
+
+| Attribute | Equivalent method | Available on |
+|-----------|-------------------|--------------|
+| `#[PermissionSubject('...')]` | `getPermissionSubject()` | Resource, RelationManager, Page, Widget |
+| `#[SharedPermissionOwner(X::class)]` | `getSharedPermissionOwner()` | Resource, RelationManager, Page, Widget |
+| `#[CustomPermissionActions([...])]` | `getPermissionCustomActions()` | Resource, RelationManager, Page, Widget |
+| `#[RegisterPermissions(false)]` | `shouldRegisterPermissions()` | Resource, RelationManager, Page, Widget |
+| `#[PermissionPanel('admin')]` | `getPermissionPanel()` | Resource, RelationManager, Page, Widget |
+
+## Permission Resource UI Configuration
+
+The built-in permissions resource UI can be customized via config or plugin fluent methods.
+
+### Section Grouping
+
+By default, resource permission sections are grouped by navigation group and cluster:
+
+```php
+// config/filament-acl.php
+'resources' => [
+    'permissions' => [
+        'sections' => [
+            'group_by_navigation_group' => true,
+            'group_by_cluster' => true,
+        ],
+    ],
+],
+```
+
+Or via the plugin fluent API:
+
+```php
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->groupByNavigationGroup(false)
+    ->groupByCluster(false)
+```
+
+When both are disabled, each resource gets its own standalone section.
+
+### Section Collapse Behavior
+
+```php
+// config/filament-acl.php
+'sections' => [
+    'collapsed' => false,        // false = expanded by default
+    'persist_collapsed' => true, // persist expanded/collapsed state
+],
+```
+
+Or via the plugin:
+
+```php
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->sectionsCollapsed(true)
+    ->sectionsPersistCollapsed(false)
+```
+
+### Inner Tabs Orientation
+
+Permission sections use inner tabs that are horizontal by default:
+
+```php
+// config/filament-acl.php
+'inner_tabs' => [
+    'vertical' => false,
+],
+```
+
+Or via the plugin:
+
+```php
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->innerTabsVertical()
+```
+
+### Fluent API Priority
+
+Plugin fluent methods always take priority over config values. This allows different panels to have different UI configurations:
+
+```php
+// Panel A: sections collapsed, vertical tabs
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->sectionsCollapsed()
+    ->innerTabsVertical()
+
+// Panel B: uses config defaults
+FilamentAclPlugin::make()
+    ->permissionsResource()
+```
+
 ## Configuration
 
 `config/filament-acl.php` is extensively documented inline.

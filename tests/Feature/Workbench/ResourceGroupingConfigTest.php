@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace CoringaWc\FilamentAcl\Tests\Feature\Workbench;
 
 use CoringaWc\FilamentAcl\Resources\Permissions\PermissionResource;
+use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Tests\TestCase;
+use Filament\Facades\Filament;
+use Filament\Panel;
 use ReflectionMethod;
 use Workbench\App\Filament\Resources\Categories\CategoryResource;
 use Workbench\App\Filament\Resources\ModerationPosts\PostResource as ModerationPostResource;
@@ -13,13 +16,12 @@ use Workbench\App\Filament\Resources\Posts\PostResource;
 
 class ResourceGroupingConfigTest extends TestCase
 {
-    // ── resolveResourceSectionLabel ─────────────────────────────────────────
+    // ── resolveResourceSectionLabel (via Discovery) ─────────────────────────
 
     public function test_section_label_returns_nav_group_when_grouping_enabled(): void
     {
         config(['filament-acl.resources.permissions.sections.group_by_navigation_group' => true]);
 
-        // Posts has NavigationGroup::Blog enum
         $label = $this->callResolveResourceSectionLabel(PostResource::class);
 
         self::assertSame('Blog', $label, 'Should return nav group label when grouping is enabled');
@@ -29,7 +31,6 @@ class ResourceGroupingConfigTest extends TestCase
     {
         config(['filament-acl.resources.permissions.sections.group_by_navigation_group' => true]);
 
-        // ModerationPosts has null navigation group
         $label = $this->callResolveResourceSectionLabel(ModerationPostResource::class);
 
         self::assertSame(
@@ -43,7 +44,6 @@ class ResourceGroupingConfigTest extends TestCase
     {
         config(['filament-acl.resources.permissions.sections.group_by_navigation_group' => false]);
 
-        // Even though Posts has NavigationGroup::Blog, it should fall through
         $label = $this->callResolveResourceSectionLabel(PostResource::class);
 
         self::assertSame(
@@ -73,16 +73,19 @@ class ResourceGroupingConfigTest extends TestCase
         self::assertNotSame($postsLabel, $categoriesLabel, 'Posts and Categories should have different labels when grouping disabled');
     }
 
-    // ── isSectionStandalone ────────────────────────────────────────────────
+    // ── isSectionStandaloneByLabel ─────────────────────────────────────────
 
     public function test_resource_with_nav_group_is_not_standalone_when_grouping_enabled(): void
     {
         config(['filament-acl.resources.permissions.sections.group_by_navigation_group' => true]);
 
-        $nodes = [['owner_class' => PostResource::class]];
+        $sectionLabel = $this->callResolveResourceSectionLabel(PostResource::class);
+        $navLabel = (string) PostResource::getNavigationLabel();
+
+        $nodes = [['section_label' => $sectionLabel, 'label' => $navLabel]];
 
         self::assertFalse(
-            $this->callIsSectionStandalone($nodes),
+            $this->callIsSectionStandaloneByLabel($nodes),
             'Resource in nav group should NOT be standalone when grouping enabled',
         );
     }
@@ -92,10 +95,13 @@ class ResourceGroupingConfigTest extends TestCase
         config(['filament-acl.resources.permissions.sections.group_by_navigation_group' => false]);
         config(['filament-acl.resources.permissions.sections.group_by_cluster' => false]);
 
-        $nodes = [['owner_class' => PostResource::class]];
+        $sectionLabel = $this->callResolveResourceSectionLabel(PostResource::class);
+        $navLabel = (string) PostResource::getNavigationLabel();
+
+        $nodes = [['section_label' => $sectionLabel, 'label' => $navLabel]];
 
         self::assertTrue(
-            $this->callIsSectionStandalone($nodes),
+            $this->callIsSectionStandaloneByLabel($nodes),
             'Resource in nav group should be standalone when grouping disabled',
         );
     }
@@ -104,10 +110,13 @@ class ResourceGroupingConfigTest extends TestCase
     {
         config(['filament-acl.resources.permissions.sections.group_by_navigation_group' => true]);
 
-        $nodes = [['owner_class' => ModerationPostResource::class]];
+        $sectionLabel = $this->callResolveResourceSectionLabel(ModerationPostResource::class);
+        $navLabel = (string) ModerationPostResource::getNavigationLabel();
+
+        $nodes = [['section_label' => $sectionLabel, 'label' => $navLabel]];
 
         self::assertTrue(
-            $this->callIsSectionStandalone($nodes),
+            $this->callIsSectionStandaloneByLabel($nodes),
             'Resource without nav group should always be standalone',
         );
     }
@@ -116,17 +125,21 @@ class ResourceGroupingConfigTest extends TestCase
 
     private function callResolveResourceSectionLabel(string $resourceClass): string
     {
-        $method = new ReflectionMethod(PermissionResource::class, 'resolveResourceSectionLabel');
+        $discovery = app(PermissionOwnerDiscovery::class);
+        $method = new ReflectionMethod(PermissionOwnerDiscovery::class, 'resolveResourceSectionLabel');
+        $panel = Filament::getCurrentPanel();
 
-        return $method->invoke(null, $resourceClass);
+        assert($panel instanceof Panel);
+
+        return $method->invoke($discovery, $panel, $resourceClass);
     }
 
     /**
      * @param  array<int, array<string, mixed>>  $nodes
      */
-    private function callIsSectionStandalone(array $nodes): bool
+    private function callIsSectionStandaloneByLabel(array $nodes): bool
     {
-        $method = new ReflectionMethod(PermissionResource::class, 'isSectionStandalone');
+        $method = new ReflectionMethod(PermissionResource::class, 'isSectionStandaloneByLabel');
 
         return $method->invoke(null, $nodes);
     }
