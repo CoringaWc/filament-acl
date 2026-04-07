@@ -48,6 +48,8 @@ return [
                 'name' => 'Nome',
                 'email' => 'E-mail',
                 'roles' => 'Funções',
+                'click_to_copy' => 'Clique para copiar',
+                'email_copied' => 'E-mail copiado',
             ],
             'columns' => [
                 'name' => 'Nome',
@@ -69,6 +71,16 @@ return [
                 'status' => 'Status',
             ],
         ],
+    ],
+    'roles' => [
+        'super_admin' => 'Super Administrador',
+        'moderator' => 'Moderador',
+        'posts_only' => 'Somente Posts',
+    ],
+    'post_statuses' => [
+        'draft' => 'Rascunho',
+        'review' => 'Em Revisão',
+        'locked' => 'Bloqueado',
     ],
     'relation_managers' => [
         'posts' => 'Posts',

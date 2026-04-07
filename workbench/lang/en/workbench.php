@@ -48,6 +48,8 @@ return [
                 'name' => 'Name',
                 'email' => 'Email',
                 'roles' => 'Roles',
+                'click_to_copy' => 'Click to copy',
+                'email_copied' => 'Email address copied',
             ],
             'columns' => [
                 'name' => 'Name',
@@ -69,6 +71,16 @@ return [
                 'status' => 'Status',
             ],
         ],
+    ],
+    'roles' => [
+        'super_admin' => 'Super Admin',
+        'moderator' => 'Moderator',
+        'posts_only' => 'Posts Only',
+    ],
+    'post_statuses' => [
+        'draft' => 'Draft',
+        'review' => 'In Review',
+        'locked' => 'Locked',
     ],
     'relation_managers' => [
         'posts' => 'Posts',

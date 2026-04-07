@@ -25,6 +25,17 @@ class PostResource extends Resource
 
     protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionActions(): array
+    {
+        return [
+            'viewAny',
+            'view',
+        ];
+    }
+
     public static function getModelLabel(): string
     {
         return __('workbench::workbench.resources.moderation_posts.model_label');
@@ -63,7 +74,9 @@ class PostResource extends Resource
             TextEntry::make('title')
                 ->label(__('workbench::workbench.resources.moderation_posts.fields.title')),
             TextEntry::make('status')
-                ->label(__('workbench::workbench.resources.moderation_posts.fields.status')),
+                ->label(__('workbench::workbench.resources.moderation_posts.fields.status'))
+                ->badge()
+                ->formatStateUsing(static fn (string $state): string => __('workbench::workbench.post_statuses.' . $state)),
         ]);
     }
 
@@ -77,7 +90,8 @@ class PostResource extends Resource
                     ->searchable(),
                 TextColumn::make('status')
                     ->label(__('workbench::workbench.resources.moderation_posts.columns.status'))
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(static fn (string $state): string => __('workbench::workbench.post_statuses.' . $state)),
             ])
             ->recordActions([
                 ViewAction::make(),

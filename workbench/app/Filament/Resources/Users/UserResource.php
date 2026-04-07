@@ -15,11 +15,11 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\IconPosition;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Workbench\App\Filament\Resources\Users\Pages\EditUser;
 use Workbench\App\Filament\Resources\Users\Pages\ListUsers;
@@ -35,6 +35,18 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedUsers;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionActions(): array
+    {
+        return [
+            'viewAny',
+            'view',
+            'update',
+        ];
+    }
 
     public static function getModelLabel(): string
     {
@@ -77,7 +89,7 @@ class UserResource extends Resource
                         Filament::getCurrentPanel()?->getId(),
                     ),
                 )
-                ->getOptionLabelFromRecordUsing(static fn (Role $record): string => Str::headline($record->name))
+                ->getOptionLabelFromRecordUsing(static fn (Role $record): string => static::translateRoleName($record->name))
                 ->multiple()
                 ->preload()
                 ->searchable()
@@ -110,14 +122,18 @@ class UserResource extends Resource
                 ->label(__('workbench::workbench.resources.users.fields.name')),
             TextEntry::make('email')
                 ->label(__('workbench::workbench.resources.users.fields.email'))
-                ->copyable(),
+                ->icon(Heroicon::Clipboard)
+                ->iconPosition(IconPosition::After)
+                ->tooltip(__('workbench::workbench.resources.users.fields.click_to_copy'))
+                ->copyable()
+                ->copyMessage(__('workbench::workbench.resources.users.fields.email_copied'))
+                ->copyMessageDuration(1500),
             TextEntry::make('roles.name')
                 ->label(__('workbench::workbench.resources.users.fields.roles'))
                 ->badge()
                 ->state(static fn (User $record): string => $record->roles
-                    ->reject(static fn (Model $role): bool => Utils::isProtectedRole($role))
                     ->pluck('name')
-                    ->map(static fn (string $name): string => Str::headline($name))
+                    ->map(static fn (string $name): string => static::translateRoleName($name))
                     ->join(', ')),
         ]);
     }
@@ -132,15 +148,19 @@ class UserResource extends Resource
                     ->searchable(),
                 TextColumn::make('email')
                     ->label(__('workbench::workbench.resources.users.columns.email'))
+                    ->icon(Heroicon::Clipboard)
+                    ->iconPosition(IconPosition::After)
+                    ->tooltip(__('workbench::workbench.resources.users.fields.click_to_copy'))
                     ->copyable()
+                    ->copyMessage(__('workbench::workbench.resources.users.fields.email_copied'))
+                    ->copyMessageDuration(1500)
                     ->searchable(),
                 TextColumn::make('visible_roles')
                     ->label(__('workbench::workbench.resources.users.columns.roles'))
                     ->badge()
                     ->state(static fn (User $record): string => $record->roles
-                        ->reject(static fn (Model $role): bool => Utils::isProtectedRole($role))
                         ->pluck('name')
-                        ->map(static fn (string $name): string => Str::headline($name))
+                        ->map(static fn (string $name): string => static::translateRoleName($name))
                         ->join(', ')),
             ])
             ->recordActions([
@@ -169,5 +189,13 @@ class UserResource extends Resource
             'view' => ViewUser::route('/{record}'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    protected static function translateRoleName(string $name): string
+    {
+        $key = 'workbench::workbench.roles.' . $name;
+        $translated = __($key);
+
+        return $translated === $key ? Str::headline($name) : $translated;
     }
 }

@@ -36,6 +36,20 @@ class PostResource extends Resource
 
     protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedDocumentText;
 
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionActions(): array
+    {
+        return [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+        ];
+    }
+
     public static function getModelLabel(): string
     {
         return __('workbench::workbench.resources.posts.model_label');
@@ -93,7 +107,9 @@ class PostResource extends Resource
             TextEntry::make('title')
                 ->label(__('workbench::workbench.resources.posts.fields.title')),
             TextEntry::make('status')
-                ->label(__('workbench::workbench.resources.posts.fields.status')),
+                ->label(__('workbench::workbench.resources.posts.fields.status'))
+                ->badge()
+                ->formatStateUsing(static fn (string $state): string => __('workbench::workbench.post_statuses.' . $state)),
             TextEntry::make('content')
                 ->label(__('workbench::workbench.resources.posts.fields.content')),
             TextEntry::make('categories_list')
@@ -114,7 +130,8 @@ class PostResource extends Resource
                     ->label(__('workbench::workbench.resources.posts.columns.author')),
                 TextColumn::make('status')
                     ->label(__('workbench::workbench.resources.posts.columns.status'))
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(static fn (string $state): string => __('workbench::workbench.post_statuses.' . $state)),
                 TextColumn::make('categories_list')
                     ->label(__('workbench::workbench.resources.posts.columns.categories'))
                     ->state(static fn (PostModel $record): string => $record->categories->pluck('name')->join(', '))

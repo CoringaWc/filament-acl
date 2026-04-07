@@ -34,6 +34,20 @@ class CategoryResource extends Resource
 
     protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedTag;
 
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionActions(): array
+    {
+        return [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+        ];
+    }
+
     public static function getModelLabel(): string
     {
         return __('workbench::workbench.resources.categories.model_label');

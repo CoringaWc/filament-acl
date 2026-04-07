@@ -257,7 +257,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
             'record' => $viewer->getKey(),
         ]))
             ->assertOk()
-            ->assertSee('Moderator')
+            ->assertSee(__('workbench::workbench.roles.moderator'))
             ->assertDontSee(Utils::getProtectedRoleName());
     }
 
