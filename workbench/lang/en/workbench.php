@@ -101,5 +101,30 @@ return [
                 'description' => 'Release-oriented records for nested-resource navigation.',
             ],
         ],
+        'users' => [
+            'admin' => ['name' => 'João Silva'],
+            'moderator' => ['name' => 'Maria Santos'],
+            'posts_only' => ['name' => 'Carlos Oliveira'],
+        ],
+        'posts' => [
+            'draft' => [
+                'title' => 'Draft Post',
+                'content' => 'A draft post seeded for the Filament ACL workbench.',
+            ],
+            'locked' => [
+                'title' => 'Locked Post',
+                'content' => 'A locked post to exercise policy domain rules.',
+            ],
+            'moderation' => [
+                'title' => 'Moderation Post',
+                'content' => 'A post intended for the moderation resource.',
+            ],
+        ],
+        'comments' => [
+            'draft_1' => 'Draft comment from the seeder.',
+            'draft_2' => 'Second draft comment to populate relation tables.',
+            'locked_1' => 'Locked posts help exercise policy denials.',
+            'moderation_1' => 'Moderation comments make the demo easier to inspect.',
+        ],
     ],
 ];

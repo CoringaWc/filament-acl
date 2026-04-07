@@ -217,6 +217,40 @@ public static function getPermissionCustomActions(): array
 
 Default resource and relation-manager actions are added automatically. `getPermissionCustomActions()` is only for non-standard actions.
 
+### Permission Actions
+
+```php
+/**
+ * @return array<int, string>
+ */
+public static function getPermissionActions(): array
+{
+    return array_values(array_unique([
+        ...app(DefaultPermissionActionRegistry::class)->forResource(),
+        ...static::getPermissionCustomActions(),
+    ]));
+}
+```
+
+Override this method to completely replace the action list for a specific owner. By default it merges config-driven defaults from `filament-acl.resources.permissions.actions` with any custom actions.
+
+The config-driven defaults are:
+
+```php
+// config/filament-acl.php
+'resources' => [
+    'permissions' => [
+        'actions' => [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+        ],
+    ],
+],
+```
+
 ### Disable Package Registration For One Owner
 
 ```php
@@ -382,6 +416,22 @@ What it does:
 - hides the protected role when configured to do so
 - respects shared owners and opt-out owners
 - can manage another panel's permission scope
+
+### Customizing The Permissions Table
+
+Use `configurePermissionsTable()` to modify the built-in permissions resource table without overriding the entire resource:
+
+```php
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->configurePermissionsTable(function (Table $table): Table {
+        return $table->defaultSort('name');
+    })
+```
+
+The closure receives a `Table` instance after all default columns and actions have been applied.
+
+### Managing Another Panel
 
 If the permissions resource lives in one panel but should manage another panel's permissions:
 
@@ -657,9 +707,11 @@ The workbench defaults to:
 
 Demo users:
 
-- `admin@filament-acl.test` / `password`
-- `moderator@filament-acl.test` / `password`
-- `posts@filament-acl.test` / `password`
+- `admin@filament-acl.test` / `password` — João Silva (super admin)
+- `moderator@filament-acl.test` / `password` — Maria Santos (moderator)
+- `posts@filament-acl.test` / `password` — Carlos Oliveira (posts only)
+
+User names are translated via `workbench::workbench.seeds.users.*` and follow the active locale.
 
 To start the workbench:
 

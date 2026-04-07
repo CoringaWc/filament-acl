@@ -101,5 +101,30 @@ return [
                 'description' => 'Registros orientados a releases para navegação de recursos aninhados.',
             ],
         ],
+        'users' => [
+            'admin' => ['name' => 'João Silva'],
+            'moderator' => ['name' => 'Maria Santos'],
+            'posts_only' => ['name' => 'Carlos Oliveira'],
+        ],
+        'posts' => [
+            'draft' => [
+                'title' => 'Post Rascunho',
+                'content' => 'Um post em rascunho criado para o workbench do Filament ACL.',
+            ],
+            'locked' => [
+                'title' => 'Post Bloqueado',
+                'content' => 'Um post bloqueado para exercitar regras de domínio da policy.',
+            ],
+            'moderation' => [
+                'title' => 'Post em Moderação',
+                'content' => 'Um post destinado ao resource de moderação.',
+            ],
+        ],
+        'comments' => [
+            'draft_1' => 'Comentário do rascunho criado pelo seeder.',
+            'draft_2' => 'Segundo comentário para preencher tabelas de relacionamento.',
+            'locked_1' => 'Posts bloqueados ajudam a exercitar negações de policy.',
+            'moderation_1' => 'Comentários de moderação facilitam a inspeção do dataset demo.',
+        ],
     ],
 ];

@@ -257,6 +257,72 @@ Values:
 
 This enum is not yet integrated into the config. When implementing the integration, update `FluentSubjectResolver` to read the strategy from config and switch behavior accordingly.
 
+## Permission Actions Configuration
+
+Default permission actions for resources are defined in config at `filament-acl.resources.permissions.actions`:
+
+```php
+'actions' => [
+    'viewAny',
+    'view',
+    'create',
+    'update',
+    'delete',
+],
+```
+
+`DefaultPermissionActionRegistry` reads this config and supplies defaults to each owner type. Resources merge these with any custom actions from `getPermissionCustomActions()`.
+
+Each owner trait exposes `getPermissionActions()` which returns the final merged, deduplicated list of actions. Override this method only when you need to completely replace the action list for a specific owner.
+
+## Permissions Resource Table Customization
+
+The plugin exposes `configurePermissionsTable(Closure $callback)` for customizing the built-in permissions resource table:
+
+```php
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->configurePermissionsTable(function (Table $table): Table {
+        return $table->defaultSort('name');
+    })
+```
+
+The closure receives a `Table` instance after the package has applied its default columns and actions. Use this to add filters, change sorting, or modify columns without overriding the entire resource.
+
+Similarly, `configurePermissionsResource(Closure $callback)` allows customizing the `PermissionResourceConfiguration` object before the resource registers with the panel.
+
+## Table Defaults Pattern
+
+Filament's `Table::configureUsing()` applies global defaults to every table in the panel. The workbench uses this in `WorkbenchServiceProvider::boot()`:
+
+```php
+Table::configureUsing(static function (Table $table): void {
+    $table->recordUrl(null);
+});
+```
+
+This is a useful pattern for setting consistent defaults like disabling record URLs, enabling striped rows, or setting default pagination. Register it in a service provider's `boot()` method.
+
+## Seeder Translation Pattern
+
+Workbench seeders use `__('workbench::workbench.seeds.*')` for all user-facing strings (names, titles, content). Emails and technical identifiers remain hardcoded.
+
+Translation keys live in `workbench/lang/{locale}/workbench.php` under the `seeds` key:
+
+```php
+'seeds' => [
+    'users' => ['admin' => ['name' => 'João Silva'], ...],
+    'posts' => ['draft' => ['title' => 'Post Rascunho', 'content' => '...'], ...],
+    'comments' => ['draft_1' => 'Comentário do rascunho...', ...],
+    'categories' => ['announcements' => ['name' => 'Anúncios', ...], ...],
+],
+```
+
+When adding new seeded data, follow this pattern:
+- add translation keys to both `en` and `pt_BR` files
+- use `__()` in the seeder for any user-visible text
+- keep technical identifiers (emails, slugs, status values) as literal strings
+
 ## Workbench
 
 The workbench is not throwaway.

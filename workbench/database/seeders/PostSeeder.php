@@ -19,43 +19,43 @@ class PostSeeder extends Seeder
         $viewer = User::query()->where('email', 'posts@filament-acl.test')->firstOrFail();
 
         $draftPost = Post::query()->updateOrCreate(
-            ['title' => 'Workbench Draft Post'],
+            ['title' => __('workbench::workbench.seeds.posts.draft.title')],
             [
                 'user_id' => $viewer->getKey(),
                 'status' => 'draft',
-                'content' => 'A draft post seeded for the Filament ACL workbench.',
+                'content' => __('workbench::workbench.seeds.posts.draft.content'),
             ],
         );
 
         $lockedPost = Post::query()->updateOrCreate(
-            ['title' => 'Workbench Locked Post'],
+            ['title' => __('workbench::workbench.seeds.posts.locked.title')],
             [
                 'user_id' => $admin->getKey(),
                 'status' => 'locked',
-                'content' => 'A locked post to exercise policy domain rules.',
+                'content' => __('workbench::workbench.seeds.posts.locked.content'),
             ],
         );
 
         $moderationPost = Post::query()->updateOrCreate(
-            ['title' => 'Workbench Moderation Post'],
+            ['title' => __('workbench::workbench.seeds.posts.moderation.title')],
             [
                 'user_id' => $moderator->getKey(),
                 'status' => 'review',
-                'content' => 'A post intended for the moderation resource.',
+                'content' => __('workbench::workbench.seeds.posts.moderation.content'),
             ],
         );
 
         $this->seedComments($draftPost, [
-            'Draft comment from the workbench seeder.',
-            'Second draft comment to make relation tables less empty.',
+            __('workbench::workbench.seeds.comments.draft_1'),
+            __('workbench::workbench.seeds.comments.draft_2'),
         ]);
 
         $this->seedComments($lockedPost, [
-            'Locked posts help exercise policy denials.',
+            __('workbench::workbench.seeds.comments.locked_1'),
         ]);
 
         $this->seedComments($moderationPost, [
-            'Moderation comments make the demo dataset easier to inspect.',
+            __('workbench::workbench.seeds.comments.moderation_1'),
         ]);
 
         $draftPost->categories()->sync(

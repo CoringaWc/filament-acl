@@ -19,21 +19,21 @@ class UserSeeder extends Seeder
         ])->delete();
 
         User::factory()->superAdmin()->create([
-            'name' => 'Workbench Super Admin',
+            'name' => __('workbench::workbench.seeds.users.admin.name'),
             'email' => 'admin@filament-acl.test',
             'password' => 'password',
             'email_verified_at' => Carbon::now(),
         ]);
 
         User::factory()->moderator()->create([
-            'name' => 'Workbench Moderator',
+            'name' => __('workbench::workbench.seeds.users.moderator.name'),
             'email' => 'moderator@filament-acl.test',
             'password' => 'password',
             'email_verified_at' => Carbon::now(),
         ]);
 
         User::factory()->postsOnly()->create([
-            'name' => 'Workbench Posts Only User',
+            'name' => __('workbench::workbench.seeds.users.posts_only.name'),
             'email' => 'posts@filament-acl.test',
             'password' => 'password',
             'email_verified_at' => Carbon::now(),
