@@ -120,6 +120,31 @@ return [
                 'update',
                 'delete',
             ],
+            'sections' => [
+                // When true (default), resources that share the same navigation group
+                // are grouped together under a single section in the permissions UI.
+                // Set to false to render each resource as its own standalone section.
+                'group_by_navigation_group' => true,
+
+                // When true (default), resources that belong to the same Filament
+                // cluster are grouped together under a shared section.
+                // Set to false to render each resource as its own standalone section.
+                'group_by_cluster' => true,
+
+                // When true, permission sections start collapsed (closed).
+                // When false (default), sections start expanded (open).
+                'collapsed' => false,
+
+                // When true (default), the collapsed/expanded state of each section
+                // is persisted in the browser so it survives page reloads.
+                'persist_collapsed' => true,
+            ],
+            'inner_tabs' => [
+                // Orientation of tabs that appear inside nested resources and relation
+                // managers. Use 'top' for horizontal tabs (default) or 'start' for
+                // vertical/lateral tabs.
+                'vertical' => false,
+            ],
         ],
     ],
 

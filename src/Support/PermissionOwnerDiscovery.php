@@ -272,6 +272,9 @@ class PermissionOwnerDiscovery
 
     protected function resolveResourceSectionLabel(Panel $panel, string $resourceClass, ?string $registrationKey = null): string
     {
+        $groupByCluster = (bool) config('filament-acl.resources.permissions.sections.group_by_cluster', true);
+        $groupByNavigationGroup = (bool) config('filament-acl.resources.permissions.sections.group_by_navigation_group', true);
+
         /** @var class-string<Cluster>|null $cluster */
         $cluster = $this->evaluateInPanel(
             panel: $panel,
@@ -282,7 +285,7 @@ class PermissionOwnerDiscovery
             ),
         );
 
-        if (($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
+        if ($groupByCluster && ($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
             return $cluster::getNavigationLabel();
         }
 
@@ -295,19 +298,25 @@ class PermissionOwnerDiscovery
             ),
         );
 
-        return (string) match (true) {
-            $navigationGroup instanceof \BackedEnum => $navigationGroup->value,
-            $navigationGroup instanceof \UnitEnum => $navigationGroup->name,
-            is_string($navigationGroup) => $navigationGroup,
-            default => (string) $this->evaluateInPanel(
-                panel: $panel,
-                callback: fn (): string => $this->evaluateResourceWithConfiguration(
-                    $resourceClass,
-                    $registrationKey,
-                    static fn (): string => (string) $resourceClass::getNavigationLabel(),
-                ),
+        $navigationLabel = (string) $this->evaluateInPanel(
+            panel: $panel,
+            callback: fn (): string => $this->evaluateResourceWithConfiguration(
+                $resourceClass,
+                $registrationKey,
+                static fn (): string => (string) $resourceClass::getNavigationLabel(),
             ),
-        };
+        );
+
+        if ($groupByNavigationGroup && ($navigationGroup !== null)) {
+            return (string) match (true) {
+                $navigationGroup instanceof \BackedEnum => $navigationGroup->value,
+                $navigationGroup instanceof \UnitEnum => $navigationGroup->name,
+                is_string($navigationGroup) => $navigationGroup,
+                default => $navigationLabel,
+            };
+        }
+
+        return $navigationLabel;
     }
 
     protected function resolvePageLabel(Panel $panel, string $pageClass, ?string $registrationKey = null): string

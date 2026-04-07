@@ -438,9 +438,7 @@ class PermissionResource extends Resource
                 }
 
                 $schema = [
-                    Tabs::make('section_' . $sectionId)
-                        ->tabs($tabs)
-                        ->columnSpanFull(),
+                    static::makeInnerTabs('section_' . $sectionId, $tabs),
                 ];
             }
 
@@ -460,7 +458,8 @@ class PermissionResource extends Resource
                 ->columnSpanFull()
                 ->compact()
                 ->collapsible()
-                ->collapsed()
+                ->collapsed((bool) config('filament-acl.resources.permissions.sections.collapsed', false))
+                ->persistCollapsed((bool) config('filament-acl.resources.permissions.sections.persist_collapsed', true))
                 ->afterHeader(fn (): array => [
                     static::buildGroupToggleAction('section_' . $sectionId, $allStatePaths),
                 ]);
@@ -490,15 +489,22 @@ class PermissionResource extends Resource
 
         $resourceClass = $firstNode['owner_class'];
 
+        $groupByCluster = (bool) config('filament-acl.resources.permissions.sections.group_by_cluster', true);
+        $groupByNavigationGroup = (bool) config('filament-acl.resources.permissions.sections.group_by_navigation_group', true);
+
         $cluster = $resourceClass::getCluster();
 
-        if (($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
+        if ($groupByCluster && ($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
             return false;
         }
 
         $navigationGroup = $resourceClass::getNavigationGroup();
 
-        return $navigationGroup === null;
+        if ($groupByNavigationGroup && ($navigationGroup !== null)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -538,9 +544,7 @@ class PermissionResource extends Resource
                 ])
                 ->columnSpanFull();
 
-            $schema[] = Tabs::make('children_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
-                ->tabs($childTabs)
-                ->columnSpanFull();
+            $schema[] = static::makeInnerTabs('children_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8), $childTabs);
         } else {
             $schema[] = static::makePermissionCheckboxList(
                 statePath: $node['state_path'],
@@ -669,9 +673,7 @@ class PermissionResource extends Resource
                     ])
                     ->columnSpanFull(),
 
-                Tabs::make('resource_children_' . $uniqueId)
-                    ->tabs($childTabs)
-                    ->columnSpanFull(),
+                static::makeInnerTabs('resource_children_' . $uniqueId, $childTabs),
             ];
         } else {
             $schema = [
@@ -739,9 +741,7 @@ class PermissionResource extends Resource
                     ])
                     ->columnSpanFull(),
 
-                Tabs::make('resource_children_' . $uniqueId)
-                    ->tabs($childTabs)
-                    ->columnSpanFull(),
+                static::makeInnerTabs('resource_children_' . $uniqueId, $childTabs),
             ];
         } else {
             $schema = [
@@ -845,20 +845,28 @@ class PermissionResource extends Resource
 
     protected static function resolveResourceSectionLabel(string $resourceClass): string
     {
+        $groupByCluster = (bool) config('filament-acl.resources.permissions.sections.group_by_cluster', true);
+        $groupByNavigationGroup = (bool) config('filament-acl.resources.permissions.sections.group_by_navigation_group', true);
+
         $cluster = $resourceClass::getCluster();
 
-        if (($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
+        if ($groupByCluster && ($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
             return $cluster::getNavigationLabel();
         }
 
         $navigationGroup = $resourceClass::getNavigationGroup();
+        $navigationLabel = (string) $resourceClass::getNavigationLabel();
 
-        return (string) match (true) {
-            $navigationGroup instanceof BackedEnum => $navigationGroup->value,
-            $navigationGroup instanceof UnitEnum => $navigationGroup->name,
-            is_string($navigationGroup) => $navigationGroup,
-            default => (string) $resourceClass::getNavigationLabel(),
-        };
+        if ($groupByNavigationGroup && ($navigationGroup !== null)) {
+            return (string) match (true) {
+                $navigationGroup instanceof BackedEnum => $navigationGroup->value,
+                $navigationGroup instanceof UnitEnum => $navigationGroup->name,
+                is_string($navigationGroup) => $navigationGroup,
+                default => $navigationLabel,
+            };
+        }
+
+        return $navigationLabel;
     }
 
     /**
@@ -911,6 +919,24 @@ class PermissionResource extends Resource
             ->bulkToggleable()
             ->columns(2)
             ->columnSpanFull();
+    }
+
+    /**
+     * Create a Tabs component for inner (nested) content, applying the configured style.
+     *
+     * @param  array<Tab>  $tabs
+     */
+    protected static function makeInnerTabs(string $name, array $tabs): Tabs
+    {
+        $innerTabs = Tabs::make($name)
+            ->tabs($tabs)
+            ->columnSpanFull();
+
+        if ((bool) config('filament-acl.resources.permissions.inner_tabs.vertical', false)) {
+            $innerTabs->vertical();
+        }
+
+        return $innerTabs;
     }
 
     // ─── Toggle Actions ─────────────────────────────────────────

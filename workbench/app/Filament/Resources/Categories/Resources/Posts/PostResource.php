@@ -14,6 +14,14 @@ class PostResource extends BasePostResource
     protected static ?string $parentResource = ParentCategoryResource::class;
 
     /**
+     * @return class-string|null
+     */
+    public static function getSharedPermissionOwner(): ?string
+    {
+        return BasePostResource::class;
+    }
+
+    /**
      * @return array<string, class-string>
      */
     public static function getPages(): array

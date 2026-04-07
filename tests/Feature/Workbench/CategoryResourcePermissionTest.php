@@ -31,11 +31,13 @@ class CategoryResourcePermissionTest extends TestCase
         self::assertTrue($response->allowed());
     }
 
-    public function test_it_allows_the_nested_post_categories_resource_with_its_own_subject_permission(): void
+    public function test_it_allows_the_nested_post_categories_resource_using_canonical_category_permission(): void
     {
         $user = User::factory()->create();
 
-        $this->grantOwnerPermission($user, 'viewAny', NestedPostCategoryResource::class, PermissionEntityType::Resource);
+        // Nested resource shares permissions with canonical CategoryResource.
+        // Granting the canonical permission should authorize the nested resource access.
+        $this->grantOwnerPermission($user, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
         $response = $this->app->make(PermissionGate::class)->inspect(
@@ -48,24 +50,18 @@ class CategoryResourcePermissionTest extends TestCase
         self::assertTrue($response->allowed());
     }
 
-    public function test_it_denies_the_main_category_resource_when_only_the_nested_permission_exists(): void
+    public function test_it_denies_the_nested_post_categories_resource_when_no_canonical_permission_exists(): void
     {
         $user = User::factory()->create();
-
-        $this->grantOwnerPermission($user, 'viewAny', NestedPostCategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
         $response = $this->app->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Category::class,
-            action: CategoryResource::class,
+            action: NestedPostCategoryResource::class,
         );
 
         self::assertFalse($response->allowed());
-        self::assertSame(
-            'Missing permission [' . $this->permissionKeyForOwner('viewAny', CategoryResource::class, PermissionEntityType::Resource) . '].',
-            $response->message(),
-        );
     }
 }

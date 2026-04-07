@@ -37,7 +37,16 @@ class FilamentAclPlugin implements Plugin
      *     model_label?: ?string,
      *     plural_model_label?: ?string,
      *     managed_panel?: string|\BackedEnum|null,
-     *     cluster?: ?string
+     *     cluster?: ?string,
+     *     sections?: array{
+     *         group_by_navigation_group?: bool,
+     *         group_by_cluster?: bool,
+     *         collapsed?: bool,
+     *         persist_collapsed?: bool
+     *     },
+     *     inner_tabs?: array{
+     *         vertical?: bool
+     *     }
      * }
      */
     protected array $permissionsResourceOptions = [];
@@ -214,6 +223,71 @@ class FilamentAclPlugin implements Plugin
         $this->permissionsResourceOptions['cluster'] = $cluster;
 
         return $this;
+    }
+
+    public function groupByNavigationGroup(bool $condition = true): static
+    {
+        $this->permissionsResourceOptions['sections']['group_by_navigation_group'] = $condition;
+
+        return $this;
+    }
+
+    public function usesGroupByNavigationGroup(): bool
+    {
+        return (bool) ($this->permissionsResourceOptions['sections']['group_by_navigation_group']
+            ?? config('filament-acl.resources.permissions.sections.group_by_navigation_group', true));
+    }
+
+    public function groupByCluster(bool $condition = true): static
+    {
+        $this->permissionsResourceOptions['sections']['group_by_cluster'] = $condition;
+
+        return $this;
+    }
+
+    public function usesGroupByCluster(): bool
+    {
+        return (bool) ($this->permissionsResourceOptions['sections']['group_by_cluster']
+            ?? config('filament-acl.resources.permissions.sections.group_by_cluster', true));
+    }
+
+    public function innerTabsVertical(bool $condition = true): static
+    {
+        $this->permissionsResourceOptions['inner_tabs']['vertical'] = $condition;
+
+        return $this;
+    }
+
+    public function usesInnerTabsVertical(): bool
+    {
+        return (bool) ($this->permissionsResourceOptions['inner_tabs']['vertical']
+            ?? config('filament-acl.resources.permissions.inner_tabs.vertical', false));
+    }
+
+    public function sectionsCollapsed(bool $condition = true): static
+    {
+        $this->permissionsResourceOptions['sections']['collapsed'] = $condition;
+
+        return $this;
+    }
+
+    public function usesSectionsCollapsed(): bool
+    {
+        return (bool) ($this->permissionsResourceOptions['sections']['collapsed']
+            ?? config('filament-acl.resources.permissions.sections.collapsed', false));
+    }
+
+    public function sectionsPersistCollapsed(bool $condition = true): static
+    {
+        $this->permissionsResourceOptions['sections']['persist_collapsed'] = $condition;
+
+        return $this;
+    }
+
+    public function usesSectionsPersistCollapsed(): bool
+    {
+        return (bool) ($this->permissionsResourceOptions['sections']['persist_collapsed']
+            ?? config('filament-acl.resources.permissions.sections.persist_collapsed', true));
     }
 
     protected function makePermissionsResourceConfiguration(): PermissionResourceConfiguration

@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace CoringaWc\FilamentAcl\RelationManagers\Concerns;
 
+use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
+use CoringaWc\FilamentAcl\Attributes\PermissionSubject as PermissionSubjectAttribute;
+use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
+use CoringaWc\FilamentAcl\Attributes\SharedPermissionOwner;
 use CoringaWc\FilamentAcl\Contracts\ResolvesPermissionSubject;
 use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
 use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
 use CoringaWc\FilamentAcl\Support\PermissionAction;
+use CoringaWc\FilamentAcl\Support\PermissionAttributeReader;
 use CoringaWc\FilamentAcl\Support\PermissionGate;
 use CoringaWc\FilamentAcl\Support\Utils;
 use Filament\Facades\Filament;
@@ -20,11 +25,17 @@ trait HasRelationManagerPermissions
 {
     public static function getPermissionSubject(): ?string
     {
-        return null;
+        return PermissionAttributeReader::read(static::class, PermissionSubjectAttribute::class)?->subject;
     }
 
     public static function shouldRegisterPermissions(): bool
     {
+        $attribute = PermissionAttributeReader::read(static::class, RegisterPermissions::class);
+
+        if ($attribute !== null) {
+            return $attribute->register;
+        }
+
         return true;
     }
 
@@ -41,6 +52,12 @@ trait HasRelationManagerPermissions
      */
     public static function getSharedPermissionOwner(): ?string
     {
+        $attribute = PermissionAttributeReader::read(static::class, SharedPermissionOwner::class);
+
+        if ($attribute !== null) {
+            return $attribute->ownerClass;
+        }
+
         return static::getPermissionOwnerClass();
     }
 
@@ -49,6 +66,12 @@ trait HasRelationManagerPermissions
      */
     public static function getPermissionCustomActions(): array
     {
+        $attribute = PermissionAttributeReader::read(static::class, CustomPermissionActions::class);
+
+        if ($attribute !== null) {
+            return $attribute->actions;
+        }
+
         return [];
     }
 
