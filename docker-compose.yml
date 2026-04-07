@@ -1,7 +1,7 @@
-# docker-compose.yml — gerado a partir de vendor/coringawc/filament-plugin-workbanch/docker-compose.yml.stub
+# docker-compose.yml — gerado a partir de vendor/coringawc/filament-plugin-workbench/docker-compose.yml.stub
 #
 # Pré-requisitos:
-#   composer require --dev coringawc/filament-plugin-workbanch
+#   composer require --dev coringawc/filament-plugin-workbench
 #
 # Variáveis de ambiente disponíveis via .env na raiz do plugin:
 #   WORKBENCH_PORT          → porta do servidor de desenvolvimento (padrão: 8001)
@@ -12,7 +12,7 @@
 services:
   php:
     build:
-      context: ./vendor/coringawc/filament-plugin-workbanch/docker/php
+      context: ./vendor/coringawc/filament-plugin-workbench/docker/php
       dockerfile: Dockerfile
       args:
         WWWUSER: ${WWWUSER:-1000}
