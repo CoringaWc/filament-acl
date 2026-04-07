@@ -4,7 +4,7 @@
 
 This repository contains the `coringawc/filament-acl` package.
 
-The package solves contextual authorization for Filament v5 by treating the Filament owner as the permission subject:
+The package solves contextual authorization for Filament v4 or v5 by treating the Filament owner as the permission subject:
 
 - `Resource`
 - `RelationManager`

@@ -19,6 +19,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Clusters\Cluster;
 use Filament\Facades\Filament;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
@@ -490,7 +491,7 @@ class PermissionResource extends Resource
             ->collapsible()
             ->collapsed();
 
-        if (isset($node['icon']) && $node['icon'] !== null) {
+        if (isset($node['icon'])) {
             $section->icon($node['icon']);
         }
 
@@ -534,7 +535,7 @@ class PermissionResource extends Resource
                     : null,
             ])));
 
-        if (isset($node['icon']) && $node['icon'] !== null) {
+        if (isset($node['icon'])) {
             $tab->icon($node['icon']);
         }
 

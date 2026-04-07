@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/coringawc/filament-acl/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/coringawc/filament-acl/actions?query=workflow%3A%22Fix+PHP+code+styling%22+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/coringawc/filament-acl.svg?style=flat-square)](https://packagist.org/packages/coringawc/filament-acl)
 
-`coringawc/filament-acl` is a Filament v5 plugin for permission systems that are driven by `Resource`, `RelationManager`, `Page`, and `Widget` ownership instead of model-derived subjects.
+`coringawc/filament-acl` is a Filament v4 or v5 plugin for permission systems that are driven by `Resource`, `RelationManager`, `Page`, and `Widget` ownership instead of model-derived subjects.
 
 It was designed for complex panels where the same Eloquent model can appear in many different UI contexts and each context may need a different permission namespace.
 
@@ -30,7 +30,7 @@ It was designed for complex panels where the same Eloquent model can appear in m
 
 - PHP 8.4+
 - Laravel 12+
-- Filament 5
+- Filament v4 and v5
 - Spatie Laravel Permission
 
 ## Installation
