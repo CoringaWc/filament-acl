@@ -77,6 +77,12 @@ class PermissionSeeder extends Seeder
                     entityType: PermissionEntityType::Widget,
                     permissionManager: $permissionManager,
                 ),
+                $this->permissionKeyForOwner(
+                    ability: 'publish',
+                    ownerClass: PostResource::class,
+                    entityType: PermissionEntityType::Resource,
+                    permissionManager: $permissionManager,
+                ),
             ]));
 
         $permissionRegistrar->forgetCachedPermissions();

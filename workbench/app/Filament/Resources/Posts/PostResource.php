@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workbench\App\Filament\Resources\Posts;
 
 use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -47,7 +48,16 @@ class PostResource extends Resource
             'create',
             'update',
             'delete',
+            ...static::getPermissionCustomActions(),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionCustomActions(): array
+    {
+        return ['publish'];
     }
 
     public static function getModelLabel(): string
@@ -141,6 +151,18 @@ class PostResource extends Resource
                 CreateAction::make(),
             ])
             ->recordActions([
+                Action::make('publish')
+                    ->label(__('workbench::workbench.actions.publish.label'))
+                    ->icon(Heroicon::OutlinedPaperAirplane)
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('workbench::workbench.actions.publish.modal_heading'))
+                    ->modalDescription(__('workbench::workbench.actions.publish.modal_description'))
+                    ->authorize('publish', PostResource::class)
+                    ->visible(fn (Post $record): bool => $record->status === 'draft')
+                    ->action(function (Post $record): void {
+                        $record->update(['status' => 'review']);
+                    }),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),

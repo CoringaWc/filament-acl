@@ -15,6 +15,7 @@ use Livewire\Livewire;
 use Workbench\App\Filament\Pages\ContentInsightsPage;
 use Workbench\App\Filament\Pages\Dashboard;
 use Workbench\App\Filament\Resources\Categories\CategoryResource;
+use Workbench\App\Filament\Resources\Categories\Pages\ListCategories;
 use Workbench\App\Filament\Resources\Categories\Resources\Posts\PostResource as NestedCategoryPostResource;
 use Workbench\App\Filament\Resources\Posts\Pages\CreatePost;
 use Workbench\App\Filament\Resources\Posts\Pages\EditPost;
@@ -259,6 +260,91 @@ class FilamentWorkbenchSmokeTest extends TestCase
             ->assertOk()
             ->assertSee(__('workbench::workbench.roles.moderator'))
             ->assertDontSee(Utils::getProtectedRoleName());
+    }
+
+    public function test_custom_action_publish_is_visible_only_for_draft_posts(): void
+    {
+        $actor = User::factory()->create();
+        $draftPost = Post::factory()->create(['status' => 'draft']);
+        $lockedPost = Post::factory()->create(['status' => 'locked']);
+
+        $this->grantOwnerPermission($actor, 'viewAny', PostResource::class, PermissionEntityType::Resource);
+        $this->grantOwnerPermission($actor, 'publish', PostResource::class, PermissionEntityType::Resource);
+        $this->actingAs($actor);
+
+        Livewire::test(ListPosts::class)
+            ->assertOk()
+            ->assertTableActionVisible('publish', record: $draftPost)
+            ->assertTableActionHidden('publish', record: $lockedPost);
+    }
+
+    public function test_custom_action_publish_is_authorized_only_with_permission(): void
+    {
+        $actor = User::factory()->create();
+        $draftPost = Post::factory()->create(['status' => 'draft']);
+
+        $this->grantOwnerPermission($actor, 'viewAny', PostResource::class, PermissionEntityType::Resource);
+        $this->actingAs($actor);
+
+        // Without 'publish' permission, the action should not be authorized
+        self::assertFalse($actor->can('publish', [$draftPost, PostResource::class]));
+
+        // Grant publish permission
+        $this->grantOwnerPermission($actor, 'publish', PostResource::class, PermissionEntityType::Resource);
+
+        // Now it should be authorized
+        self::assertTrue($actor->can('publish', [$draftPost, PostResource::class]));
+    }
+
+    public function test_custom_action_archive_is_visible_only_for_categories_with_description(): void
+    {
+        $actor = User::factory()->create();
+        $categoryWithDesc = Category::factory()->create(['description' => 'Some description']);
+        $categoryNoDesc = Category::factory()->create(['description' => null]);
+
+        $this->grantOwnerPermission($actor, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
+        $this->grantOwnerPermission($actor, 'archive', CategoryResource::class, PermissionEntityType::Resource);
+        $this->actingAs($actor);
+
+        Livewire::test(ListCategories::class)
+            ->assertOk()
+            ->assertTableActionVisible('archive', record: $categoryWithDesc)
+            ->assertTableActionHidden('archive', record: $categoryNoDesc);
+    }
+
+    public function test_custom_action_archive_is_authorized_only_with_permission(): void
+    {
+        $actor = User::factory()->create();
+        $category = Category::factory()->create(['description' => 'Some description']);
+
+        $this->grantOwnerPermission($actor, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
+        $this->actingAs($actor);
+
+        // Without 'archive' permission
+        self::assertFalse($actor->can('archive', [$category, CategoryResource::class]));
+
+        // Grant archive permission
+        $this->grantOwnerPermission($actor, 'archive', CategoryResource::class, PermissionEntityType::Resource);
+
+        // Now authorized
+        self::assertTrue($actor->can('archive', [$category, CategoryResource::class]));
+    }
+
+    public function test_custom_permissions_appear_in_the_permission_resource_ui(): void
+    {
+        Artisan::call('db:seed', [
+            '--class' => DatabaseSeeder::class,
+            '--no-interaction' => true,
+        ]);
+
+        $this->actingAs(
+            User::query()->where('email', 'admin@filament-acl.test')->firstOrFail(),
+        );
+
+        $this->get(PermissionResource::getUrl('create', configuration: 'filament-acl-permissions'))
+            ->assertOk()
+            ->assertSee(__('filament-acl::filament-acl.permission_labels.publish'))
+            ->assertSee(__('filament-acl::filament-acl.permission_labels.archive'));
     }
 
     public function test_it_can_render_the_page_and_widget_examples_with_permissions(): void

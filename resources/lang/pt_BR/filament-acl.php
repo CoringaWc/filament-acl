@@ -61,5 +61,7 @@ return [
         'detach_any' => 'Desanexar em lote',
         'dissociate' => 'Desassociar',
         'dissociate_any' => 'Desassociar em lote',
+        'publish' => 'Publicar',
+        'archive' => 'Arquivar',
     ],
 ];

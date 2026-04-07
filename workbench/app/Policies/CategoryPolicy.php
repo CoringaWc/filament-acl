@@ -58,4 +58,17 @@ class CategoryPolicy
 
         return Response::allow();
     }
+
+    public function archive(User $user, Category $record, PermissionAction | string | null $permissionAction = null): Response
+    {
+        if ($response = $this->denyUnlessPermitted($user, 'archive', $permissionAction)) {
+            return $response;
+        }
+
+        if ($record->description === null) {
+            return Response::deny('Category is already archived.');
+        }
+
+        return Response::allow();
+    }
 }

@@ -1,0 +1,7 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Illuminate\\Testing\\TestResponse\:\:assertTableActionVisible\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Feature/Workbench/FilamentWorkbenchSmokeTest.php

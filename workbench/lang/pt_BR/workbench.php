@@ -3,6 +3,18 @@
 declare(strict_types=1);
 
 return [
+    'actions' => [
+        'publish' => [
+            'label' => 'Publicar',
+            'modal_heading' => 'Publicar Post',
+            'modal_description' => 'Tem certeza que deseja publicar este post? Ele será enviado para revisão.',
+        ],
+        'archive' => [
+            'label' => 'Arquivar',
+            'modal_heading' => 'Arquivar Categoria',
+            'modal_description' => 'Tem certeza que deseja arquivar esta categoria? A descrição será removida.',
+        ],
+    ],
     'resources' => [
         'categories' => [
             'model_label' => 'Categoria',

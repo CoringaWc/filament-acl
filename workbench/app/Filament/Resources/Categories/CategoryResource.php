@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workbench\App\Filament\Resources\Categories;
 
 use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -45,7 +46,16 @@ class CategoryResource extends Resource
             'create',
             'update',
             'delete',
+            ...static::getPermissionCustomActions(),
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionCustomActions(): array
+    {
+        return ['archive'];
     }
 
     public static function getModelLabel(): string
@@ -121,6 +131,18 @@ class CategoryResource extends Resource
                 CreateAction::make(),
             ])
             ->recordActions([
+                Action::make('archive')
+                    ->label(__('workbench::workbench.actions.archive.label'))
+                    ->icon(Heroicon::OutlinedArchiveBox)
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('workbench::workbench.actions.archive.modal_heading'))
+                    ->modalDescription(__('workbench::workbench.actions.archive.modal_description'))
+                    ->authorize('archive', CategoryResource::class)
+                    ->visible(fn (Category $record): bool => $record->description !== null)
+                    ->action(function (Category $record): void {
+                        $record->update(['description' => null]);
+                    }),
                 ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),

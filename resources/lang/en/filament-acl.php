@@ -61,5 +61,7 @@ return [
         'detach_any' => 'Detach Any',
         'dissociate' => 'Dissociate',
         'dissociate_any' => 'Dissociate Any',
+        'publish' => 'Publish',
+        'archive' => 'Archive',
     ],
 ];

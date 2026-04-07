@@ -62,4 +62,17 @@ class PostPolicy
 
         return Response::allow();
     }
+
+    public function publish(User $user, Post $record, PermissionAction | string | null $permissionAction = null): Response
+    {
+        if ($response = $this->denyUnlessPermitted($user, 'publish', $permissionAction)) {
+            return $response;
+        }
+
+        if ($record->status !== 'draft') {
+            return Response::deny('Only draft posts can be published.');
+        }
+
+        return Response::allow();
+    }
 }
