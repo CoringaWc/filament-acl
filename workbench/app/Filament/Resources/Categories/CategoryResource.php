@@ -38,21 +38,6 @@ class CategoryResource extends Resource
     /**
      * @return array<int, string>
      */
-    public static function getPermissionActions(): array
-    {
-        return [
-            'viewAny',
-            'view',
-            'create',
-            'update',
-            'delete',
-            ...static::getPermissionCustomActions(),
-        ];
-    }
-
-    /**
-     * @return array<int, string>
-     */
     public static function getPermissionCustomActions(): array
     {
         return ['archive'];

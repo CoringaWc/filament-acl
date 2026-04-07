@@ -18,13 +18,6 @@ final class DefaultPermissionActionRegistry
             'create',
             'update',
             'delete',
-            'deleteAny',
-            'forceDelete',
-            'forceDeleteAny',
-            'restore',
-            'restoreAny',
-            'replicate',
-            'reorder',
         ]);
 
         return array_values(array_unique($methods));

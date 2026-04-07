@@ -232,27 +232,35 @@ return [
         'merge' => true,
         'register_role_policy' => true,
         'role_policy' => RolePolicy::class,
+        /*
+        |----------------------------------------------------------------------
+        | Default Resource Permission Actions
+        |----------------------------------------------------------------------
+        |
+        | Actions listed here are generated for every resource that uses the
+        | HasResourcePermissions trait (unless the resource overrides
+        | getPermissionActions()). Trim this list to remove rarely-used
+        | permissions like forceDelete, restore, replicate, or reorder.
+        |
+        | Resources can add extra actions via getPermissionCustomActions()
+        | without needing to override the full list.
+        |
+        | Full list available:
+        | viewAny, view, create, update, delete, deleteAny,
+        | forceDelete, forceDeleteAny, restore, restoreAny,
+        | replicate, reorder
+        |
+        */
         'methods' => [
             'viewAny',
             'view',
             'create',
             'update',
             'delete',
-            'deleteAny',
-            'forceDelete',
-            'forceDeleteAny',
-            'restore',
-            'restoreAny',
-            'replicate',
-            'reorder',
         ],
         'single_parameter_methods' => [
             'viewAny',
             'create',
-            'deleteAny',
-            'forceDeleteAny',
-            'restoreAny',
-            'reorder',
         ],
     ],
 

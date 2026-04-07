@@ -24,20 +24,6 @@ class PostsRelationManager extends RelationManager
 
     protected static string $relationship = 'posts';
 
-    /**
-     * @return array<int, string>
-     */
-    public static function getPermissionActions(): array
-    {
-        return [
-            'viewAny',
-            'view',
-            'create',
-            'update',
-            'delete',
-        ];
-    }
-
     public function mount(): void
     {
         parent::mount();

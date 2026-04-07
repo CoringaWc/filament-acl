@@ -19,13 +19,6 @@ class DefaultPermissionActionRegistryTest extends TestCase
             'create',
             'update',
             'delete',
-            'deleteAny',
-            'forceDelete',
-            'forceDeleteAny',
-            'restore',
-            'restoreAny',
-            'replicate',
-            'reorder',
         ], $registry->forResource());
     }
 
