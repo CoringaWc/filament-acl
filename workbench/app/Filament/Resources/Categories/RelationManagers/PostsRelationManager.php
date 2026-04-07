@@ -52,12 +52,15 @@ class PostsRelationManager extends RelationManager
                 ->searchable()
                 ->required(),
             TextInput::make('title')
+                ->label(__('workbench::workbench.resources.posts.fields.title'))
                 ->required()
                 ->maxLength(255),
             TextInput::make('status')
+                ->label(__('workbench::workbench.resources.posts.fields.status'))
                 ->default('draft')
                 ->required(),
             Textarea::make('content')
+                ->label(__('workbench::workbench.resources.posts.fields.content'))
                 ->columnSpanFull(),
         ]);
     }
@@ -68,11 +71,14 @@ class PostsRelationManager extends RelationManager
             ->paginated(false)
             ->columns([
                 TextColumn::make('title')
+                    ->label(__('workbench::workbench.resources.posts.columns.title'))
                     ->searchable(),
                 TextColumn::make('user.name')
                     ->label(__('workbench::workbench.resources.posts.columns.author')),
                 TextColumn::make('status')
-                    ->badge(),
+                    ->label(__('workbench::workbench.resources.posts.columns.status'))
+                    ->badge()
+                    ->formatStateUsing(static fn (string $state): string => __('workbench::workbench.post_statuses.' . $state)),
             ])
             ->headerActions([
                 CreateAction::make(),

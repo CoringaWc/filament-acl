@@ -35,11 +35,14 @@ class PostsRelationManager extends RelationManager
     {
         return $schema->components([
             TextInput::make('title')
+                ->label(__('workbench::workbench.resources.posts.fields.title'))
                 ->required(),
             TextInput::make('status')
+                ->label(__('workbench::workbench.resources.posts.fields.status'))
                 ->default('draft')
                 ->required(),
             Textarea::make('content')
+                ->label(__('workbench::workbench.resources.posts.fields.content'))
                 ->columnSpanFull(),
         ]);
     }
@@ -50,9 +53,12 @@ class PostsRelationManager extends RelationManager
             ->paginated(false)
             ->columns([
                 TextColumn::make('title')
+                    ->label(__('workbench::workbench.resources.posts.columns.title'))
                     ->searchable(),
                 TextColumn::make('status')
-                    ->badge(),
+                    ->label(__('workbench::workbench.resources.posts.columns.status'))
+                    ->badge()
+                    ->formatStateUsing(static fn (string $state): string => __('workbench::workbench.post_statuses.' . $state)),
             ])
             ->headerActions([
                 CreateAction::make(),

@@ -45,9 +45,11 @@ class CategoriesRelationManager extends RelationManager
     {
         return $schema->components([
             TextInput::make('name')
+                ->label(__('workbench::workbench.resources.categories.fields.name'))
                 ->required()
                 ->maxLength(255),
             Textarea::make('description')
+                ->label(__('workbench::workbench.resources.categories.fields.description'))
                 ->columnSpanFull(),
         ]);
     }
@@ -58,8 +60,10 @@ class CategoriesRelationManager extends RelationManager
             ->paginated(false)
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('workbench::workbench.resources.categories.columns.name'))
                     ->searchable(),
                 TextColumn::make('description')
+                    ->label(__('workbench::workbench.resources.categories.columns.description'))
                     ->limit(40),
             ])
             ->headerActions([
