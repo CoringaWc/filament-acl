@@ -13,6 +13,8 @@ return [
                 'guard_name' => 'Guard',
                 'panel' => 'Painel',
                 'permissions' => 'Permissões',
+                'select_all' => 'Marcar todos',
+                'select_all_help' => 'Ative para selecionar todas as permissões desta função.',
             ],
             'tabs' => [
                 'resources' => 'Recursos',
@@ -32,8 +34,8 @@ return [
                 'ungrouped' => 'Outros',
             ],
             'section_toggle' => [
-                'select_all' => 'Selecionar Todos',
-                'deselect_all' => 'Desmarcar Todos',
+                'select_all' => 'Marcar todos',
+                'deselect_all' => 'Desmarcar todos',
             ],
             'section_description' => '1 permissão|:count permissões',
             'navigation_group' => 'Controle de Acesso',

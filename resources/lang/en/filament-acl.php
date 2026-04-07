@@ -13,6 +13,8 @@ return [
                 'guard_name' => 'Guard',
                 'panel' => 'Panel',
                 'permissions' => 'Permissions',
+                'select_all' => 'Select all',
+                'select_all_help' => 'Enable to select all permissions for this role.',
             ],
             'tabs' => [
                 'resources' => 'Resources',
@@ -32,8 +34,8 @@ return [
                 'ungrouped' => 'Other',
             ],
             'section_toggle' => [
-                'select_all' => 'Select All',
-                'deselect_all' => 'Deselect All',
+                'select_all' => 'Select all',
+                'deselect_all' => 'Deselect all',
             ],
             'section_description' => '1 permission|:count permissions',
             'navigation_group' => 'Access Control',

@@ -299,7 +299,14 @@ class PermissionOwnerDiscovery
             $navigationGroup instanceof \BackedEnum => $navigationGroup->value,
             $navigationGroup instanceof \UnitEnum => $navigationGroup->name,
             is_string($navigationGroup) => $navigationGroup,
-            default => __('filament-acl::filament-acl.resources.permissions.groups.resources'),
+            default => (string) $this->evaluateInPanel(
+                panel: $panel,
+                callback: fn (): string => $this->evaluateResourceWithConfiguration(
+                    $resourceClass,
+                    $registrationKey,
+                    static fn (): string => (string) $resourceClass::getNavigationLabel(),
+                ),
+            ),
         };
     }
 

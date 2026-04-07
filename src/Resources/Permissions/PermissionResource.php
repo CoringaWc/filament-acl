@@ -14,6 +14,7 @@ use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerRegistration;
 use CoringaWc\FilamentAcl\Support\Utils;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -22,24 +23,31 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Panel;
 use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Contracts\HasIcon;
+use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
+use Livewire\Component as LivewireComponent;
 use UnitEnum;
 
 class PermissionResource extends Resource
@@ -112,6 +120,16 @@ class PermissionResource extends Resource
                                         return $rule;
                                     },
                                 ),
+                            Toggle::make('select_all')
+                                ->label(__('filament-acl::filament-acl.resources.permissions.fields.select_all'))
+                                ->helperText(__('filament-acl::filament-acl.resources.permissions.fields.select_all_help'))
+                                ->onIcon('heroicon-s-shield-check')
+                                ->offIcon('heroicon-s-shield-exclamation')
+                                ->live()
+                                ->afterStateUpdated(function (LivewireComponent $livewire, Set $set, bool $state): void {
+                                    static::toggleEntitiesViaSelectAll($livewire, $set, $state);
+                                })
+                                ->dehydrated(false),
                             Hidden::make('guard_name')
                                 ->default(static::getDefaultGuardName()),
                             Hidden::make(static::getPanelColumnName())
@@ -354,6 +372,13 @@ class PermissionResource extends Resource
     }
 
     /**
+     * Build permission sections grouped by navigation group / cluster.
+     *
+     * Hierarchy rules:
+     * - NavGroup/Cluster sections: ALWAYS use Tabs for resources, even with single resource
+     * - Standalone sections (no cluster, no navGroup): Fieldset + child Tabs directly in Section
+     * - afterHeader toggle action on every Section
+     *
      * @return array<int, Section>
      */
     protected static function buildResourcePermissionSections(): array
@@ -361,13 +386,136 @@ class PermissionResource extends Resource
         $resourceTree = static::buildResourceTree(static::getDiscoverableResourceNodes());
         $sections = [];
 
-        foreach ($resourceTree as $nodes) {
-            foreach ($nodes as $node) {
-                $sections[] = static::buildResourceNodeSection($node);
+        foreach ($resourceTree as $sectionLabel => $nodes) {
+            $sectionIcon = static::resolveResourceSectionIcon($nodes);
+            $allStatePaths = static::collectAllNodeStatePaths($nodes);
+            $sectionId = Str::slug($sectionLabel) . '_' . substr(md5($sectionLabel), 0, 8);
+
+            $isStandalone = static::isSectionStandalone($nodes);
+
+            if ($isStandalone && count($nodes) === 1) {
+                $singleNode = $nodes[0];
+
+                $schema = static::buildStandaloneNodeSchema($singleNode);
+            } else {
+                $tabs = [];
+
+                foreach ($nodes as $node) {
+                    $tabs[] = static::buildResourceGroupTab($node);
+                }
+
+                $schema = [
+                    Tabs::make('section_' . $sectionId)
+                        ->tabs($tabs)
+                        ->columnSpanFull(),
+                ];
             }
+
+            $totalPermissions = 0;
+
+            foreach ($nodes as $node) {
+                $totalPermissions += static::countNodePermissions($node);
+            }
+
+            $section = Section::make($sectionLabel)
+                ->description(trans_choice(
+                    'filament-acl::filament-acl.resources.permissions.section_description',
+                    $totalPermissions,
+                    ['count' => $totalPermissions],
+                ))
+                ->schema($schema)
+                ->columnSpanFull()
+                ->compact()
+                ->collapsible()
+                ->collapsed()
+                ->afterHeader(fn (): array => [
+                    static::buildGroupToggleAction('section_' . $sectionId, $allStatePaths),
+                ]);
+
+            if ($sectionIcon !== null) {
+                $section->icon($sectionIcon);
+            }
+
+            $sections[] = $section;
         }
 
         return $sections;
+    }
+
+    /**
+     * Determine if a section's nodes belong to standalone resources (no cluster, no navGroup).
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     */
+    protected static function isSectionStandalone(array $nodes): bool
+    {
+        $firstNode = $nodes[0] ?? null;
+
+        if ($firstNode === null) {
+            return true;
+        }
+
+        $resourceClass = $firstNode['owner_class'];
+
+        $cluster = $resourceClass::getCluster();
+
+        if (($cluster !== null) && is_subclass_of($cluster, Cluster::class)) {
+            return false;
+        }
+
+        $navigationGroup = $resourceClass::getNavigationGroup();
+
+        return $navigationGroup === null;
+    }
+
+    /**
+     * Build the schema for a standalone resource node (direct content, no Tab wrapper).
+     *
+     * @param  array<string, mixed>  $node
+     * @return array<int, Component>
+     */
+    protected static function buildStandaloneNodeSchema(array $node): array
+    {
+        $children = $node['children'] ?? [];
+
+        $childTabs = array_values(array_map(
+            static fn (array $childNode): Tab => static::buildResourceNodeTab($childNode),
+            $children,
+        ));
+
+        foreach ($node['relation_managers'] as $relationManager) {
+            $childTabs[] = Tab::make($relationManager['label'])
+                ->schema([
+                    static::makePermissionCheckboxList(
+                        statePath: $relationManager['state_path'],
+                        options: $relationManager['options'],
+                    ),
+                ]);
+        }
+
+        $schema = [];
+
+        if (! empty($children) || ! empty($node['relation_managers'])) {
+            $schema[] = Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
+                ->schema([
+                    static::makePermissionCheckboxList(
+                        statePath: $node['state_path'],
+                        options: $node['options'],
+                    ),
+                ])
+                ->columnSpanFull();
+
+            $schema[] = Tabs::make('children_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
+                ->tabs($childTabs)
+                ->columnSpanFull();
+        } else {
+            $schema[] = static::makePermissionCheckboxList(
+                statePath: $node['state_path'],
+                options: $node['options'],
+            );
+        }
+
+        return $schema;
     }
 
     /**
@@ -441,15 +589,21 @@ class PermissionResource extends Resource
     }
 
     /**
+     * Build a Tab for a root resource node inside a grouped section.
+     *
+     * When the resource has children or relation managers, includes a toggle
+     * action and nested Tabs. Otherwise, just the CheckboxList.
+     *
      * @param  array<string, mixed>  $node
      */
-    protected static function buildResourceNodeSection(array $node): Section
+    protected static function buildResourceGroupTab(array $node): Tab
     {
         $permissionCount = static::countNodePermissions($node);
+        $children = $node['children'] ?? [];
 
         $childTabs = array_values(array_map(
             static fn (array $childNode): Tab => static::buildResourceNodeTab($childNode),
-            $node['children'],
+            $children,
         ));
 
         foreach ($node['relation_managers'] as $relationManager) {
@@ -462,64 +616,17 @@ class PermissionResource extends Resource
                 ]);
         }
 
-        $schema = [
-            Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
-                ->schema([
-                    static::makePermissionCheckboxList(
-                        statePath: $node['state_path'],
-                        options: $node['options'],
-                    ),
-                ])
-                ->columnSpanFull(),
-        ];
+        $hasNested = $childTabs !== [];
 
-        if ($childTabs !== []) {
-            $schema[] = Tabs::make('resource_node_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
-                ->tabs($childTabs)
-                ->columnSpanFull();
-        }
+        if ($hasNested) {
+            $allStatePaths = static::collectAllNodeStatePaths([$node]);
+            $uniqueId = Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8);
 
-        $section = Section::make($node['label'])
-            ->description(trans_choice(
-                'filament-acl::filament-acl.resources.permissions.section_description',
-                $permissionCount,
-                ['count' => $permissionCount],
-            ))
-            ->schema($schema)
-            ->columnSpanFull()
-            ->compact()
-            ->collapsible()
-            ->collapsed();
+            $schema = [
+                Actions::make([
+                    static::buildGroupToggleAction('resource_' . $uniqueId, $allStatePaths),
+                ])->alignment(Alignment::End),
 
-        if (isset($node['icon'])) {
-            $section->icon($node['icon']);
-        }
-
-        return $section;
-    }
-
-    /**
-     * @param  array<string, mixed>  $node
-     */
-    protected static function buildResourceNodeTab(array $node): Tab
-    {
-        $childTabs = array_values(array_map(
-            static fn (array $childNode): Tab => static::buildResourceNodeTab($childNode),
-            $node['children'],
-        ));
-
-        foreach ($node['relation_managers'] as $relationManager) {
-            $childTabs[] = Tab::make($relationManager['label'])
-                ->schema([
-                    static::makePermissionCheckboxList(
-                        statePath: $relationManager['state_path'],
-                        options: $relationManager['options'],
-                    ),
-                ]);
-        }
-
-        $tab = Tab::make($node['label'])
-            ->schema(array_values(array_filter([
                 Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
                     ->schema([
                         static::makePermissionCheckboxList(
@@ -528,12 +635,93 @@ class PermissionResource extends Resource
                         ),
                     ])
                     ->columnSpanFull(),
-                $childTabs !== []
-                    ? Tabs::make('resource_children_' . Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8))
-                        ->tabs($childTabs)
-                        ->columnSpanFull()
-                    : null,
-            ])));
+
+                Tabs::make('resource_children_' . $uniqueId)
+                    ->tabs($childTabs)
+                    ->columnSpanFull(),
+            ];
+        } else {
+            $schema = [
+                static::makePermissionCheckboxList(
+                    statePath: $node['state_path'],
+                    options: $node['options'],
+                ),
+            ];
+        }
+
+        $tab = Tab::make($node['label'])
+            ->badge($permissionCount > 0 ? $permissionCount : null)
+            ->schema($schema);
+
+        if (isset($node['icon'])) {
+            $tab->icon($node['icon']);
+        }
+
+        return $tab;
+    }
+
+    /**
+     * Build a Tab for a child resource node (recursive).
+     *
+     * When the node has children/RMs, includes a toggle action and nested Tabs.
+     *
+     * @param  array<string, mixed>  $node
+     */
+    protected static function buildResourceNodeTab(array $node): Tab
+    {
+        $children = $node['children'] ?? [];
+
+        $childTabs = array_values(array_map(
+            static fn (array $childNode): Tab => static::buildResourceNodeTab($childNode),
+            $children,
+        ));
+
+        foreach ($node['relation_managers'] as $relationManager) {
+            $childTabs[] = Tab::make($relationManager['label'])
+                ->schema([
+                    static::makePermissionCheckboxList(
+                        statePath: $relationManager['state_path'],
+                        options: $relationManager['options'],
+                    ),
+                ]);
+        }
+
+        $hasNested = $childTabs !== [];
+
+        if ($hasNested) {
+            $allStatePaths = static::collectAllNodeStatePaths([$node]);
+            $uniqueId = Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8);
+
+            $schema = [
+                Actions::make([
+                    static::buildGroupToggleAction('node_' . $uniqueId, $allStatePaths),
+                ])->alignment(Alignment::End),
+
+                Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
+                    ->schema([
+                        static::makePermissionCheckboxList(
+                            statePath: $node['state_path'],
+                            options: $node['options'],
+                        ),
+                    ])
+                    ->columnSpanFull(),
+
+                Tabs::make('resource_children_' . $uniqueId)
+                    ->tabs($childTabs)
+                    ->columnSpanFull(),
+            ];
+        } else {
+            $schema = [
+                static::makePermissionCheckboxList(
+                    statePath: $node['state_path'],
+                    options: $node['options'],
+                ),
+            ];
+        }
+
+        $tab = Tab::make($node['label'])
+            ->badge(fn (): ?int => ($count = static::countNodePermissions($node)) > 0 ? $count : null)
+            ->schema($schema);
 
         if (isset($node['icon'])) {
             $tab->icon($node['icon']);
@@ -636,7 +824,7 @@ class PermissionResource extends Resource
             $navigationGroup instanceof BackedEnum => $navigationGroup->value,
             $navigationGroup instanceof UnitEnum => $navigationGroup->name,
             is_string($navigationGroup) => $navigationGroup,
-            default => __('filament-acl::filament-acl.resources.permissions.groups.resources'),
+            default => (string) $resourceClass::getNavigationLabel(),
         };
     }
 
@@ -669,7 +857,7 @@ class PermissionResource extends Resource
             return $navigationGroup->getIcon();
         }
 
-        return null;
+        return $resourceClass::getNavigationIcon();
     }
 
     /**
@@ -690,6 +878,122 @@ class PermissionResource extends Resource
             ->bulkToggleable()
             ->columns(2)
             ->columnSpanFull();
+    }
+
+    // ─── Toggle Actions ─────────────────────────────────────────
+
+    /**
+     * Build a toggle action that selects/deselects all permissions for a group of nodes.
+     *
+     * Follows the same pattern as siasgfacil's buildGroupToggleAction.
+     *
+     * @param  array<int, string>  $statePaths
+     */
+    protected static function buildGroupToggleAction(string $id, array $statePaths): Action
+    {
+        return Action::make('toggle_' . $id)
+            ->label(function (LivewireComponent $livewire) use ($statePaths): string {
+                $allSelected = static::collectCheckboxListsRecursive($livewire)
+                    ->filter(fn (CheckboxList $c): bool => in_array($c->getName(), $statePaths, true))
+                    ->every(fn (CheckboxList $component): bool => count(array_keys($component->getOptions())) === count(
+                        collect($component->getState())->values()->unique()->toArray(),
+                    ));
+
+                return $allSelected
+                    ? __('filament-acl::filament-acl.resources.permissions.section_toggle.deselect_all')
+                    : __('filament-acl::filament-acl.resources.permissions.section_toggle.select_all');
+            })
+            ->color('primary')
+            ->link()
+            ->action(function (LivewireComponent $livewire, Set $set) use ($statePaths): void {
+                $components = static::collectCheckboxListsRecursive($livewire)
+                    ->filter(fn (CheckboxList $c): bool => in_array($c->getName(), $statePaths, true));
+
+                $allSelected = $components->every(fn (CheckboxList $component): bool => count(array_keys($component->getOptions())) === count(
+                    collect($component->getState())->values()->unique()->toArray(),
+                ));
+
+                $components->each(function (CheckboxList $component) use ($allSelected): void {
+                    $state = $allSelected ? [] : array_keys($component->getOptions());
+                    $component->state($state);
+                });
+
+                static::toggleSelectAllViaEntities($livewire, $set);
+            });
+    }
+
+    /**
+     * Collect all CheckboxList components from the Livewire form, including concealed tabs.
+     *
+     * @return Collection<int, CheckboxList>
+     */
+    protected static function collectCheckboxListsRecursive(LivewireComponent $livewire): Collection
+    {
+        /** @phpstan-ignore-next-line */
+        $allComponents = $livewire->form->getFlatComponents(withHidden: true);
+
+        return collect($allComponents)
+            ->filter(fn (mixed $component): bool => $component instanceof CheckboxList)
+            ->values();
+    }
+
+    /**
+     * Recursively collect all state paths from nodes and their relation managers.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    protected static function collectAllNodeStatePaths(array $nodes): array
+    {
+        $paths = [];
+
+        foreach ($nodes as $node) {
+            $paths[] = $node['state_path'];
+
+            foreach ($node['relation_managers'] as $rm) {
+                $paths[] = $rm['state_path'];
+            }
+
+            if (! empty($node['children'])) {
+                $paths = array_merge($paths, static::collectAllNodeStatePaths($node['children']));
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
+     * Update the global select_all toggle state based on all CheckboxLists.
+     */
+    protected static function toggleSelectAllViaEntities(LivewireComponent $livewire, Set $set): void
+    {
+        $entitiesStates = static::collectCheckboxListsRecursive($livewire)
+            ->reduce(function (Collection $counts, CheckboxList $component): Collection {
+                $counts[$component->getName()] = count(array_keys($component->getOptions())) === count(
+                    collect($component->getState())->values()->unique()->toArray(),
+                );
+
+                return $counts;
+            }, collect())
+            ->values();
+
+        if ($entitiesStates->containsStrict(false)) {
+            $set('select_all', false);
+        } else {
+            $set('select_all', true);
+        }
+    }
+
+    /**
+     * Master toggle: select/deselect all CheckboxLists in the form.
+     */
+    protected static function toggleEntitiesViaSelectAll(LivewireComponent $livewire, Set $set, bool $state): void
+    {
+        static::collectCheckboxListsRecursive($livewire)
+            ->each(function (CheckboxList $component) use ($state): void {
+                $permissions = $state ? array_keys($component->getOptions()) : [];
+                $component->state($permissions);
+            });
     }
 
     protected static function getOwnerPermissionOptions(
