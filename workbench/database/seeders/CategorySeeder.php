@@ -13,16 +13,16 @@ class CategorySeeder extends Seeder
     {
         foreach ([
             [
-                'name' => 'Announcements',
-                'description' => 'Posts used to exercise the primary resource flow.',
+                'name' => __('workbench::workbench.seeds.categories.announcements.name'),
+                'description' => __('workbench::workbench.seeds.categories.announcements.description'),
             ],
             [
-                'name' => 'Moderation',
-                'description' => 'Categories used to test contextual moderation permissions.',
+                'name' => __('workbench::workbench.seeds.categories.moderation.name'),
+                'description' => __('workbench::workbench.seeds.categories.moderation.description'),
             ],
             [
-                'name' => 'Releases',
-                'description' => 'Release-oriented records for nested-resource navigation.',
+                'name' => __('workbench::workbench.seeds.categories.releases.name'),
+                'description' => __('workbench::workbench.seeds.categories.releases.description'),
             ],
         ] as $category) {
             Category::query()->updateOrCreate(

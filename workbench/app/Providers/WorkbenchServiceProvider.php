@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Workbench\App\Providers;
 
 use CoringaWc\FilamentAcl\Policies\RolePolicy;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
@@ -46,5 +47,9 @@ class WorkbenchServiceProvider extends ServiceProvider
         Gate::policy(Post::class, PostPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+
+        Table::configureUsing(static function (Table $table): void {
+            $table->recordUrl(null);
+        });
     }
 }

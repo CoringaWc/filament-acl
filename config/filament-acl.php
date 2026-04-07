@@ -114,6 +114,13 @@ return [
                 'widgets' => true,
                 'custom_permissions' => true,
             ],
+            'actions' => [
+                'viewAny',
+                'view',
+                'create',
+                'update',
+                'delete',
+            ],
         ],
     ],
 

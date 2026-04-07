@@ -25,6 +25,8 @@ class FilamentAclPlugin implements Plugin
 
     protected ?Closure $configurePermissionsResourceUsing = null;
 
+    protected ?Closure $configurePermissionsTableUsing = null;
+
     /**
      * @var array{
      *     slug?: ?string,
@@ -134,6 +136,18 @@ class FilamentAclPlugin implements Plugin
         $this->configurePermissionsResourceUsing = $callback;
 
         return $this;
+    }
+
+    public function configurePermissionsTable(Closure $callback): static
+    {
+        $this->configurePermissionsTableUsing = $callback;
+
+        return $this;
+    }
+
+    public function getConfigurePermissionsTableUsing(): ?Closure
+    {
+        return $this->configurePermissionsTableUsing;
     }
 
     public function permissionsResourceSlug(?string $slug): static

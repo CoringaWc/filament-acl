@@ -60,21 +60,29 @@ class PostSeeder extends Seeder
 
         $draftPost->categories()->sync(
             Category::query()
-                ->whereIn('name', ['Announcements', 'Releases'])
+                ->whereIn('name', [
+                    __('workbench::workbench.seeds.categories.announcements.name'),
+                    __('workbench::workbench.seeds.categories.releases.name'),
+                ])
                 ->pluck('id')
                 ->all(),
         );
 
         $lockedPost->categories()->sync(
             Category::query()
-                ->whereIn('name', ['Releases'])
+                ->whereIn('name', [
+                    __('workbench::workbench.seeds.categories.releases.name'),
+                ])
                 ->pluck('id')
                 ->all(),
         );
 
         $moderationPost->categories()->sync(
             Category::query()
-                ->whereIn('name', ['Moderation', 'Announcements'])
+                ->whereIn('name', [
+                    __('workbench::workbench.seeds.categories.moderation.name'),
+                    __('workbench::workbench.seeds.categories.announcements.name'),
+                ])
                 ->pluck('id')
                 ->all(),
         );

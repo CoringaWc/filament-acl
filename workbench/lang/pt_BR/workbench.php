@@ -86,4 +86,20 @@ return [
         'posts' => 'Posts',
         'categories' => 'Categorias',
     ],
+    'seeds' => [
+        'categories' => [
+            'announcements' => [
+                'name' => 'Anúncios',
+                'description' => 'Posts usados para exercitar o fluxo principal do resource.',
+            ],
+            'moderation' => [
+                'name' => 'Moderação',
+                'description' => 'Categorias usadas para testar permissões contextuais de moderação.',
+            ],
+            'releases' => [
+                'name' => 'Lançamentos',
+                'description' => 'Registros orientados a releases para navegação de recursos aninhados.',
+            ],
+        ],
+    ],
 ];

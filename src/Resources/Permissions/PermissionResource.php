@@ -8,6 +8,7 @@ use BackedEnum;
 use CoringaWc\FilamentAcl\Contracts\ResolvesPermissionSubject;
 use CoringaWc\FilamentAcl\Contracts\StoresPermissions;
 use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
+use CoringaWc\FilamentAcl\FilamentAclPlugin;
 use CoringaWc\FilamentAcl\FilamentPermissionManager;
 use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
 use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
@@ -16,7 +17,6 @@ use CoringaWc\FilamentAcl\Support\PermissionOwnerRegistration;
 use CoringaWc\FilamentAcl\Support\Utils;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Clusters\Cluster;
 use Filament\Facades\Filament;
@@ -70,6 +70,23 @@ class PermissionResource extends Resource
     public static function getPermissionSubject(): ?string
     {
         return 'FilamentPermissions';
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getPermissionActions(): array
+    {
+        /** @var array<int, string> $actions */
+        $actions = config('filament-acl.resources.permissions.actions', [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+        ]);
+
+        return $actions;
     }
 
     /**
@@ -148,7 +165,7 @@ class PermissionResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        $table
             ->deferLoading()
             ->columns([
                 TextColumn::make('name')
@@ -158,7 +175,8 @@ class PermissionResource extends Resource
                     ->searchable(),
                 TextColumn::make('guard_name')
                     ->label(__('filament-acl::filament-acl.resources.permissions.columns.guard_name'))
-                    ->badge(),
+                    ->badge()
+                    ->searchable(),
                 TextColumn::make(static::getPanelColumnName())
                     ->label(__('filament-acl::filament-acl.resources.permissions.columns.panel'))
                     ->badge()
@@ -167,20 +185,36 @@ class PermissionResource extends Resource
                     ->label(__('filament-acl::filament-acl.resources.permissions.columns.permissions_count'))
                     ->counts('permissions')
                     ->badge()
-                    ->color('success'),
+                    ->color('success')
+                    ->sortable(),
                 TextColumn::make('updated_at')
                     ->label(__('filament-acl::filament-acl.resources.permissions.columns.updated_at'))
                     ->since()
-                    ->dateTimeTooltip('Y-m-d H:i:s'),
+                    ->dateTimeTooltip('Y-m-d H:i:s')
+                    ->sortable(),
             ])
             ->recordUrl(null)
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                DeleteBulkAction::make(),
             ]);
+
+        $configureUsing = static::getPluginTableConfigurator();
+
+        if ($configureUsing !== null) {
+            $configureUsing($table);
+        }
+
+        return $table;
+    }
+
+    protected static function getPluginTableConfigurator(): ?\Closure
+    {
+        try {
+            return FilamentAclPlugin::get()->getConfigurePermissionsTableUsing();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
