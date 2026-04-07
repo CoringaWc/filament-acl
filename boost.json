@@ -1,0 +1,12 @@
+{
+    "agents": [
+        "copilot"
+    ],
+    "guidelines": true,
+    "mcp": true,
+    "packages": [
+        "filament/filament",
+        "spatie/laravel-permission"
+    ],
+    "sail": false
+}
