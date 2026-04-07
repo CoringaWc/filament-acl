@@ -80,7 +80,6 @@ class PermissionResource extends Resource
         /** @var array<int, string> $actions */
         $actions = config('filament-acl.resources.permissions.actions', [
             'viewAny',
-            'view',
             'create',
             'update',
             'delete',

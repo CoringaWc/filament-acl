@@ -116,7 +116,6 @@ return [
             ],
             'actions' => [
                 'viewAny',
-                'view',
                 'create',
                 'update',
                 'delete',
