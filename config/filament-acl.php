@@ -257,7 +257,7 @@ return [
             'create',
             'update',
             'delete',
-            'deleteAny',
+            // 'deleteAny',
             // 'forceDelete',
             // 'forceDeleteAny',
             // 'restore',
@@ -268,7 +268,7 @@ return [
         'single_parameter_methods' => [
             'viewAny',
             'create',
-            'deleteAny',
+            // 'deleteAny',
             // 'forceDeleteAny',
             // 'restoreAny',
             // 'reorder',
