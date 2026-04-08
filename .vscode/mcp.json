@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "laravel-boost": {
+      "command": "bash",
+      "args": ["scripts/boost-mcp.sh"],
+      "cwd": "${workspaceFolder}"
+    }
+  },
+  "inputs": []
+}
