@@ -8,6 +8,7 @@ use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
 use CoringaWc\FilamentAcl\Resources\Permissions\PermissionResource;
 use CoringaWc\FilamentAcl\Support\Utils;
 use CoringaWc\FilamentAcl\Tests\TestCase;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -37,7 +38,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 {
     public function test_it_can_render_a_filament_resource_list_page_in_the_workbench(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $posts = Post::factory()->count(2)->create();
 
         $this->grantOwnerPermission($actor, 'viewAny', PostResource::class, PermissionEntityType::Resource);
@@ -50,7 +51,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_render_a_filament_resource_create_page_in_the_workbench(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         User::factory()->create();
 
         $this->grantOwnerPermission($actor, 'viewAny', PostResource::class, PermissionEntityType::Resource);
@@ -63,7 +64,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_reach_a_registered_filament_resource_route_over_http(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $post = Post::factory()->create([
             'title' => 'Workbench HTTP Post',
         ]);
@@ -78,7 +79,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_render_a_category_resource_list_page_in_the_workbench(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $categories = Category::factory()->count(2)->create();
 
         $this->grantOwnerPermission($actor, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
@@ -91,7 +92,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_render_a_filament_relation_manager_in_the_workbench(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $owner = User::factory()->create();
         $posts = Post::factory()->count(2)->for($owner)->create();
 
@@ -108,7 +109,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_render_a_post_categories_relation_manager_in_the_workbench(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $post = Post::factory()->create();
         $categories = Category::factory()->count(2)->create();
         $post->categories()->attach($categories->modelKeys());
@@ -126,7 +127,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_reach_a_nested_post_categories_resource_route_over_http(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $post = Post::factory()->create([
             'title' => 'Nested Parent Post',
         ]);
@@ -148,7 +149,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_reach_a_nested_category_posts_resource_route_over_http(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $category = Category::factory()->create([
             'name' => 'Nested Category',
         ]);
@@ -209,7 +210,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
             ->assertSee('Usuário')
             ->assertSee('Insights de Conteúdo')
             ->assertSee('Resumo de Posts')
-            ->assertSee('Exportar conteúdo')
+            ->assertSee(__('workbench::workbench.custom_permissions.export'))
             ->assertDontSee(Utils::getProtectedRoleName());
     }
 
@@ -264,7 +265,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_custom_action_publish_is_visible_only_for_draft_posts(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $draftPost = Post::factory()->create(['status' => 'draft']);
         $lockedPost = Post::factory()->create(['status' => 'locked']);
 
@@ -274,13 +275,13 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
         Livewire::test(ListPosts::class)
             ->assertOk()
-            ->assertTableActionVisible('publish', record: $draftPost)
-            ->assertTableActionHidden('publish', record: $lockedPost);
+            ->assertActionVisible(TestAction::make('publish')->table($draftPost))
+            ->assertActionHidden(TestAction::make('publish')->table($lockedPost));
     }
 
     public function test_custom_action_publish_is_authorized_only_with_permission(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $draftPost = Post::factory()->create(['status' => 'draft']);
 
         $this->grantOwnerPermission($actor, 'viewAny', PostResource::class, PermissionEntityType::Resource);
@@ -298,7 +299,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_custom_action_archive_is_visible_only_for_categories_with_description(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $categoryWithDesc = Category::factory()->create(['description' => 'Some description']);
         $categoryNoDesc = Category::factory()->create(['description' => null]);
 
@@ -308,13 +309,13 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
         Livewire::test(ListCategories::class)
             ->assertOk()
-            ->assertTableActionVisible('archive', record: $categoryWithDesc)
-            ->assertTableActionHidden('archive', record: $categoryNoDesc);
+            ->assertActionVisible(TestAction::make('archive')->table($categoryWithDesc))
+            ->assertActionHidden(TestAction::make('archive')->table($categoryNoDesc));
     }
 
     public function test_custom_action_archive_is_authorized_only_with_permission(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $category = Category::factory()->create(['description' => 'Some description']);
 
         $this->grantOwnerPermission($actor, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
@@ -349,7 +350,7 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
     public function test_it_can_render_the_page_and_widget_examples_with_permissions(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
 
         $this->grantOwnerPermission($actor, 'view', ContentInsightsPage::class, PermissionEntityType::Page);
         $this->grantOwnerPermission($actor, 'view', PostsOverviewWidget::class, PermissionEntityType::Widget);

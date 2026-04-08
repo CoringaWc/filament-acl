@@ -3,9 +3,6 @@
 declare(strict_types=1);
 
 use CoringaWc\FilamentAcl\Policies\RolePolicy;
-use CoringaWc\FilamentAcl\Support\ConfiguredPermissionSubjectResolver;
-use CoringaWc\FilamentAcl\Support\DefaultPermissionKeyBuilder;
-use CoringaWc\FilamentAcl\Support\SpatiePermissionStore;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -24,21 +21,6 @@ return [
         'permission' => Permission::class,
         'role' => Role::class,
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Core Runtime Services
-    |--------------------------------------------------------------------------
-    |
-    | The package resolves permission subjects, builds permission keys, and
-    | persists permissions through swappable services. Most projects can keep
-    | the defaults. Override them only when you need custom subject naming,
-    | a different permission-key format, or a custom storage backend.
-    |
-    */
-    'subject_resolver' => ConfiguredPermissionSubjectResolver::class,
-    'permission_key_builder' => DefaultPermissionKeyBuilder::class,
-    'permission_store' => SpatiePermissionStore::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -144,6 +126,10 @@ return [
                 // managers. Use 'top' for horizontal tabs (default) or 'start' for
                 // vertical/lateral tabs.
                 'vertical' => false,
+
+                // When true (default), inner tabs are rendered inside a container (bordered box).
+                // When false, tabs render without a container border.
+                'contained' => true,
             ],
         ],
     ],
@@ -330,31 +316,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Runtime Callbacks
-    |--------------------------------------------------------------------------
-    |
-    | Advanced extension points to override subject resolution or permission-key
-    | building globally without replacing the underlying service classes.
-    |
-    */
-    'callbacks' => [
-        'resolve_permission_subject_using' => null,
-        'build_permission_key_using' => null,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Relation Managers
     |--------------------------------------------------------------------------
     |
-    | When true, relation managers that define a related resource may delegate
-    | authorization to that related resource by default. This is disabled by
-    | default so each relation manager can decide explicitly whether it wants
-    | its own permissions or shared permissions.
+    | - delegate_to_related_resource_by_default: when true, relation managers
+    |   that define a related resource may delegate authorization to that
+    |   resource. Disabled by default so each RM decides explicitly.
+    | - actions: default abilities generated/synchronized for relation managers
+    |   that use HasRelationManagerPermissions. Includes resource-level actions
+    |   plus RM-specific ones (associate, attach, detach, etc.).
+    | - exclude: classes that should be ignored by sync/UI discovery even if
+    |   they use the package traits.
     |
     */
     'relation_managers' => [
         'delegate_to_related_resource_by_default' => false,
+        'actions' => [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+            'associate',
+            'attach',
+            'detach',
+            'detachAny',
+            'dissociate',
+            'dissociateAny',
+        ],
+        'exclude' => [],
     ],
 
     /*

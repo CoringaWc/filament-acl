@@ -28,15 +28,22 @@ final class DefaultPermissionActionRegistry
      */
     public function forRelationManager(): array
     {
-        return array_values(array_unique([
-            ...$this->forResource(),
+        /** @var array<int, string> $methods */
+        $methods = config('filament-acl.relation_managers.actions', [
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
             'associate',
             'attach',
             'detach',
             'detachAny',
             'dissociate',
             'dissociateAny',
-        ]));
+        ]);
+
+        return array_values(array_unique($methods));
     }
 
     /**

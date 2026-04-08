@@ -220,10 +220,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'custom_permissions' => [
-        'content.export' => __('workbench::workbench.custom_permissions.export'),
+        'content.export' => 'workbench::workbench.custom_permissions.export',
         [
             'name' => 'content.publish',
-            'label' => __('workbench::workbench.custom_permissions.publish'),
+            'label' => 'workbench::workbench.custom_permissions.publish',
             'panels' => ['admin'],
         ],
     ],

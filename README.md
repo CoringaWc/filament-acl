@@ -151,6 +151,26 @@ class PostsRelationManager extends RelationManager
 }
 ```
 
+#### Delegating To A Related Resource
+
+By default, each relation manager maintains its own permission set. If you prefer that a relation manager delegates authorization to a related resource instead:
+
+```php
+// config/filament-acl.php
+'relation_managers' => [
+    'delegate_to_related_resource_by_default' => true,
+],
+```
+
+When enabled, a relation manager that defines a related resource will use that resource's permissions instead of generating its own. Individual relation managers can override this per-class:
+
+```php
+public static function shouldUseRelatedResourcePermissions(): bool
+{
+    return false; // keep own permissions even when the global default is true
+}
+```
+
 ### Page
 
 ```php
@@ -232,21 +252,19 @@ public static function getPermissionActions(): array
 }
 ```
 
-Override this method to completely replace the action list for a specific owner. By default it merges config-driven defaults from `filament-acl.resources.permissions.actions` with any custom actions.
+Override this method to completely replace the action list for a specific owner. By default it merges config-driven defaults from `filament-acl.policies.methods` with any custom actions.
 
 The config-driven defaults are:
 
 ```php
 // config/filament-acl.php
-'resources' => [
-    'permissions' => [
-        'actions' => [
-            'viewAny',
-            'view',
-            'create',
-            'update',
-            'delete',
-        ],
+'policies' => [
+    'methods' => [
+        'viewAny',
+        'view',
+        'create',
+        'update',
+        'delete',
     ],
 ],
 ```
@@ -592,18 +610,41 @@ Examples:
 ],
 ```
 
+### Translating Custom Permission Labels
+
+The built-in permissions resource wraps every custom permission label with `__()` before rendering. To support multiple locales, use **translation keys** as labels instead of literal strings:
+
+```php
+'custom_permissions' => [
+    'content.export' => 'acl::permissions.custom.export',
+    [
+        'name' => 'content.publish',
+        'label' => 'acl::permissions.custom.publish',
+    ],
+],
+```
+
+Then define the translations in your language files:
+
+```php
+// lang/vendor/acl/en/permissions.php
+'custom' => [
+    'export' => 'Export content',
+    'publish' => 'Publish content',
+],
+
+// lang/vendor/acl/pt_BR/permissions.php
+'custom' => [
+    'export' => 'Exportar conteúdo',
+    'publish' => 'Publicar conteúdo',
+],
+```
+
+If a label is not a translation key (or the key is not found), it will be displayed as-is.
+
 ## Runtime Customization
 
 You can customize subject generation and permission-key building globally.
-
-### Via Config
-
-```php
-'callbacks' => [
-    'resolve_permission_subject_using' => null,
-    'build_permission_key_using' => null,
-],
-```
 
 ### Via Facade
 
@@ -633,6 +674,23 @@ FilamentPermission::buildPermissionKeyUsing(
 ```
 
 If the callback returns `null`, the package falls back to its default behavior.
+
+### Via Container Binding
+
+To replace the entire implementation of a core service (subject resolver, key builder, or permission store), override the contract binding in your `AppServiceProvider`:
+
+```php
+use CoringaWc\FilamentAcl\Contracts\ResolvesPermissionSubject;
+use CoringaWc\FilamentAcl\Contracts\BuildsPermissionKey;
+use CoringaWc\FilamentAcl\Contracts\StoresPermissions;
+
+// In AppServiceProvider::register()
+$this->app->singleton(ResolvesPermissionSubject::class, MyCustomSubjectResolver::class);
+$this->app->singleton(BuildsPermissionKey::class, MyCustomKeyBuilder::class);
+$this->app->singleton(StoresPermissions::class, MyCustomStore::class);
+```
+
+Since your application's service provider registers after the package, the container will use your implementation.
 
 ## Utilities
 
@@ -680,13 +738,13 @@ Attributes are read first. If an attribute is present, the corresponding method 
 
 Available attributes:
 
-| Attribute | Equivalent method | Available on |
-|-----------|-------------------|--------------|
-| `#[PermissionSubject('...')]` | `getPermissionSubject()` | Resource, RelationManager, Page, Widget |
-| `#[SharedPermissionOwner(X::class)]` | `getSharedPermissionOwner()` | Resource, RelationManager, Page, Widget |
-| `#[CustomPermissionActions([...])]` | `getPermissionCustomActions()` | Resource, RelationManager, Page, Widget |
-| `#[RegisterPermissions(false)]` | `shouldRegisterPermissions()` | Resource, RelationManager, Page, Widget |
-| `#[PermissionPanel('admin')]` | `getPermissionPanel()` | Resource, RelationManager, Page, Widget |
+| Attribute                            | Equivalent method              | Available on                            |
+| ------------------------------------ | ------------------------------ | --------------------------------------- |
+| `#[PermissionSubject('...')]`        | `getPermissionSubject()`       | Resource, RelationManager, Page, Widget |
+| `#[SharedPermissionOwner(X::class)]` | `getSharedPermissionOwner()`   | Resource, RelationManager, Page, Widget |
+| `#[CustomPermissionActions([...])]`  | `getPermissionCustomActions()` | Resource, RelationManager, Page, Widget |
+| `#[RegisterPermissions(false)]`      | `shouldRegisterPermissions()`  | Resource, RelationManager, Page, Widget |
+| `#[PermissionPanel('admin')]`        | `getPermissionPanel()`         | Resource, RelationManager, Page, Widget |
 
 ## Permission Resource UI Configuration
 
@@ -757,6 +815,52 @@ FilamentAclPlugin::make()
     ->innerTabsVertical()
 ```
 
+### Inner Tabs Container
+
+Inner tabs can be rendered inside a bordered container:
+
+```php
+// config/filament-acl.php
+'inner_tabs' => [
+    'contained' => false,
+],
+```
+
+Or via the plugin:
+
+```php
+FilamentAclPlugin::make()
+    ->permissionsResource()
+    ->innerTabsContained()
+```
+
+### Excluding Owners From Discovery
+
+Relation managers, pages, and widgets can be excluded from permission sync and UI discovery via config:
+
+```php
+// config/filament-acl.php
+'relation_managers' => [
+    'exclude' => [
+        App\Filament\Resources\Users\RelationManagers\AuditLogsRelationManager::class,
+    ],
+],
+
+'pages' => [
+    'exclude' => [
+        App\Filament\Pages\Dashboard::class,
+    ],
+],
+
+'widgets' => [
+    'exclude' => [
+        App\Filament\Widgets\StatsWidget::class,
+    ],
+],
+```
+
+Excluded classes are ignored even if they use the package traits.
+
 ### Fluent API Priority
 
 Plugin fluent methods always take priority over config values. This allows different panels to have different UI configurations:
@@ -780,7 +884,6 @@ FilamentAclPlugin::make()
 Important areas:
 
 - models
-- runtime services
 - permission key formatting
 - plugin defaults
 - built-in permissions resource
@@ -790,7 +893,6 @@ Important areas:
 - policy generation
 - stubs
 - subject overrides
-- callbacks
 - relation managers
 - pages
 - widgets
@@ -849,6 +951,8 @@ http://localhost:8001/admin/login
 ```
 
 The workbench `.env` overrides `testbench.yaml` defaults for HTTP serving (file-based SQLite and file session driver). Tests continue using in-memory SQLite from `testbench.yaml`.
+
+The workbench config files in `workbench/config/` are loaded automatically through `testbench.yaml` (`discovers.config: true` under the `workbench:` key). This lets the workbench override package config defaults without touching the published config file.
 
 ## Testing
 

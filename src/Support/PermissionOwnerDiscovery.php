@@ -75,9 +75,11 @@ class PermissionOwnerDiscovery
         );
 
         $registrations = [];
+        /** @var array<int, class-string<RelationManager>> $excludedRelationManagers */
+        $excludedRelationManagers = config('filament-acl.relation_managers.exclude', []);
 
         foreach ($this->extractRelationManagerClasses($relations) as $relationManagerClass) {
-            if (! Utils::shouldDisplayPermissionOwner($relationManagerClass)) {
+            if (in_array($relationManagerClass, $excludedRelationManagers, true) || ! Utils::shouldDisplayPermissionOwner($relationManagerClass)) {
                 continue;
             }
 

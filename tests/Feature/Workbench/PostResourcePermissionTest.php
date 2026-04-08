@@ -10,13 +10,12 @@ use CoringaWc\FilamentAcl\Tests\TestCase;
 use Workbench\App\Filament\Resources\ModerationPosts\PostResource as ModerationPostResource;
 use Workbench\App\Filament\Resources\Posts\PostResource;
 use Workbench\App\Models\Post;
-use Workbench\App\Models\User;
 
 class PostResourcePermissionTest extends TestCase
 {
     public function test_it_allows_the_main_post_resource_when_the_user_has_the_matching_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         $this->grantOwnerPermission($user, 'viewAny', PostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
@@ -33,7 +32,7 @@ class PostResourcePermissionTest extends TestCase
 
     public function test_it_denies_the_main_post_resource_when_only_the_moderation_permission_exists(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         $this->grantOwnerPermission($user, 'viewAny', ModerationPostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
@@ -54,7 +53,7 @@ class PostResourcePermissionTest extends TestCase
 
     public function test_it_allows_the_moderation_resource_with_its_own_subject_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         $this->grantOwnerPermission($user, 'viewAny', ModerationPostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);

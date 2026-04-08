@@ -24,6 +24,12 @@ class DefaultPermissionActionRegistryTest extends TestCase
 
     public function test_it_adds_relation_manager_specific_actions(): void
     {
+        config(['filament-acl.relation_managers.actions' => [
+            'viewAny', 'view', 'create', 'update', 'delete',
+            'associate', 'attach', 'detach', 'detachAny',
+            'dissociate', 'dissociateAny',
+        ]]);
+
         $registry = $this->app->make(DefaultPermissionActionRegistry::class);
 
         self::assertContains('attach', $registry->forRelationManager());

@@ -94,6 +94,10 @@ return [
         'review' => 'In Review',
         'locked' => 'Locked',
     ],
+    'custom_permissions' => [
+        'export' => 'Export content',
+        'publish' => 'Publish content',
+    ],
     'relation_managers' => [
         'posts' => 'Posts',
         'categories' => 'Categories',

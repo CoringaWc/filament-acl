@@ -45,7 +45,8 @@ class FilamentAclPlugin implements Plugin
      *         persist_collapsed?: bool
      *     },
      *     inner_tabs?: array{
-     *         vertical?: bool
+     *         vertical?: bool,
+     *         contained?: bool
      *     }
      * }
      */
@@ -262,6 +263,19 @@ class FilamentAclPlugin implements Plugin
     {
         return (bool) ($this->permissionsResourceOptions['inner_tabs']['vertical']
             ?? config('filament-acl.resources.permissions.inner_tabs.vertical', false));
+    }
+
+    public function innerTabsContained(bool $condition = true): static
+    {
+        $this->permissionsResourceOptions['inner_tabs']['contained'] = $condition;
+
+        return $this;
+    }
+
+    public function usesInnerTabsContained(): bool
+    {
+        return (bool) ($this->permissionsResourceOptions['inner_tabs']['contained']
+            ?? config('filament-acl.resources.permissions.inner_tabs.contained', false));
     }
 
     public function sectionsCollapsed(bool $condition = true): static

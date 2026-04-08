@@ -12,13 +12,12 @@ use Workbench\App\Filament\Resources\Posts\RelationManagers\CategoriesRelationMa
 use Workbench\App\Filament\Resources\Posts\Resources\Categories\CategoryResource as NestedPostCategoryResource;
 use Workbench\App\Models\Category;
 use Workbench\App\Models\Post;
-use Workbench\App\Models\User;
 
 class CategoriesRelationManagerPermissionTest extends TestCase
 {
     public function test_it_resolves_the_post_categories_relation_manager_subject_for_view_any(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $owner = Post::factory()->create();
         $categories = Category::factory()->count(2)->create();
         $owner->categories()->attach($categories->modelKeys());
@@ -39,7 +38,7 @@ class CategoriesRelationManagerPermissionTest extends TestCase
 
     public function test_it_denies_the_post_categories_relation_manager_when_the_permission_is_missing(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $owner = Post::factory()->create();
 
         $this->actingAs($actor);

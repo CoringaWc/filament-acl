@@ -80,6 +80,30 @@ class PluginFluentApiTest extends TestCase
         self::assertTrue($tabs->isVertical(), 'Fluent innerTabsVertical(true) should make Tabs vertical');
     }
 
+    // ── innerTabsContained fluent ──────────────────────────────────────────
+
+    public function test_fluent_inner_tabs_contained_overrides_config(): void
+    {
+        config(['filament-acl.resources.permissions.inner_tabs.contained' => false]);
+
+        $plugin = FilamentAclPlugin::get();
+        $plugin->innerTabsContained(true);
+
+        self::assertTrue($plugin->usesInnerTabsContained());
+    }
+
+    public function test_fluent_inner_tabs_contained_affects_tabs_component(): void
+    {
+        config(['filament-acl.resources.permissions.inner_tabs.contained' => true]);
+
+        $plugin = FilamentAclPlugin::get();
+        $plugin->innerTabsContained(false);
+
+        $tabs = $this->callMakeInnerTabs('test_tabs', []);
+
+        self::assertFalse($tabs->isContained(), 'Fluent innerTabsContained(false) should make Tabs not contained');
+    }
+
     // ── sectionsCollapsed fluent ───────────────────────────────────────────
 
     public function test_fluent_sections_collapsed_overrides_config(): void

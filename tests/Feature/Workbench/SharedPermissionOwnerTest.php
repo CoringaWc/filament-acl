@@ -14,7 +14,6 @@ use Workbench\App\Filament\Resources\Posts\PostResource;
 use Workbench\App\Filament\Resources\Posts\Resources\Categories\CategoryResource as NestedPostCategoryResource;
 use Workbench\App\Models\Category;
 use Workbench\App\Models\Post;
-use Workbench\App\Models\User;
 
 class SharedPermissionOwnerTest extends TestCase
 {
@@ -68,7 +67,7 @@ class SharedPermissionOwnerTest extends TestCase
 
     public function test_nested_post_category_resource_is_authorized_using_canonical_category_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $this->grantOwnerPermission($user, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
@@ -84,7 +83,7 @@ class SharedPermissionOwnerTest extends TestCase
 
     public function test_nested_category_post_resource_is_authorized_using_canonical_post_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $this->grantOwnerPermission($user, 'viewAny', PostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
@@ -100,7 +99,7 @@ class SharedPermissionOwnerTest extends TestCase
 
     public function test_nested_post_category_resource_is_denied_without_any_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $this->actingAs($user);
 
         $response = $this->app->make(PermissionGate::class)->inspect(
@@ -115,7 +114,7 @@ class SharedPermissionOwnerTest extends TestCase
 
     public function test_nested_category_post_resource_is_denied_without_any_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $this->actingAs($user);
 
         $response = $this->app->make(PermissionGate::class)->inspect(
@@ -132,7 +131,7 @@ class SharedPermissionOwnerTest extends TestCase
 
     public function test_canonical_category_resource_is_authorized_independently(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $this->grantOwnerPermission($user, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 

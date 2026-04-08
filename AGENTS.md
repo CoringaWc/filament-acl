@@ -259,7 +259,12 @@ This enum is not yet integrated into the config. When implementing the integrati
 
 ## Permission Actions Configuration
 
-Default permission actions for resources are defined in config at `filament-acl.resources.permissions.actions`:
+Default permission actions are defined per owner type in config:
+
+- `filament-acl.policies.methods` — resource actions (used by `DefaultPermissionActionRegistry::forResource()`)
+- `filament-acl.relation_managers.actions` — relation manager actions (includes RM-specific actions like associate, attach, detach, etc.)
+- `filament-acl.pages.actions` — page actions (default: `['view']`)
+- `filament-acl.widgets.actions` — widget actions (default: `['view']`)
 
 ```php
 'actions' => [
@@ -271,9 +276,37 @@ Default permission actions for resources are defined in config at `filament-acl.
 ],
 ```
 
-`DefaultPermissionActionRegistry` reads this config and supplies defaults to each owner type. Resources merge these with any custom actions from `getPermissionCustomActions()`.
+`DefaultPermissionActionRegistry` reads these config keys and supplies defaults to each owner type. Resources merge these with any custom actions from `getPermissionCustomActions()`.
 
 Each owner trait exposes `getPermissionActions()` which returns the final merged, deduplicated list of actions. Override this method only when you need to completely replace the action list for a specific owner.
+
+### Exclude Lists
+
+Each non-resource owner type supports an `exclude` config key to remove specific classes from sync and UI discovery:
+
+- `filament-acl.relation_managers.exclude`
+- `filament-acl.pages.exclude`
+- `filament-acl.widgets.exclude`
+
+Classes listed in `exclude` are ignored even if they use the package traits.
+
+## Core Runtime Services
+
+The package resolves three core services through the Laravel container:
+
+- `ResolvesPermissionSubject` → `ConfiguredPermissionSubjectResolver` (default)
+- `BuildsPermissionKey` → `DefaultPermissionKeyBuilder` (default)
+- `StoresPermissions` → `SpatiePermissionStore` (default)
+
+These are registered as singletons in `FilamentPermissionServiceProvider::packageRegistered()`. To override, bind your own implementation in your application's service provider:
+
+```php
+$this->app->singleton(ResolvesPermissionSubject::class, MyCustomResolver::class);
+```
+
+The consuming app's provider registers after the package, so the container will use the app's binding.
+
+> **Note:** These services were previously configurable via `subject_resolver`, `permission_key_builder`, `permission_store`, and `callbacks` config keys. Those keys have been removed. Use container bindings or the `FilamentPermissionManager` facade instead.
 
 ## Permissions Resource Table Customization
 
@@ -319,9 +352,48 @@ Translation keys live in `workbench/lang/{locale}/workbench.php` under the `seed
 ```
 
 When adding new seeded data, follow this pattern:
+
 - add translation keys to both `en` and `pt_BR` files
 - use `__()` in the seeder for any user-visible text
 - keep technical identifiers (emails, slugs, status values) as literal strings
+
+## Relation Manager Delegation
+
+Relation managers can delegate authorization to a related resource instead of maintaining their own permission set. This is controlled by:
+
+- `filament-acl.relation_managers.delegate_to_related_resource_by_default` (default: `false`)
+- `HasRelationManagerPermissions::shouldUseRelatedResourcePermissions()` — reads the config key above
+
+When `true`, a relation manager that defines a related resource will use that resource's permissions instead of its own. Individual relation managers can override this by implementing `shouldUseRelatedResourcePermissions()` themselves.
+
+## Custom Permission Translation Pattern
+
+Custom permission labels in config support translation through `__()`.
+
+The `PermissionResource::getCustomPermissionOptions()` method wraps every label with `__()` before rendering. This means config labels should be **translation keys**, not literal human-readable strings:
+
+```php
+// config/filament-acl.php — CORRECT
+'custom_permissions' => [
+    'content.export' => 'acl::permissions.custom.export',  // translation key
+    [
+        'name' => 'content.publish',
+        'label' => 'acl::permissions.custom.publish',      // translation key
+    ],
+],
+
+// config/filament-acl.php — WRONG (hardcoded English)
+'custom_permissions' => [
+    'content.export' => 'Export content',       // will display English regardless of locale
+],
+```
+
+The resolution chain is:
+
+1. If a label is provided (string or array with `label` key), `__($label)` is called
+2. If no label is provided, the permission name itself is used as fallback via `__($name)`
+
+When adding custom permissions, always provide translation keys and add corresponding entries to the application's language files.
 
 ## Workbench
 
@@ -340,10 +412,12 @@ Current workbench goals:
 - widget example (non-lazy for HTTP test compatibility)
 - built-in permissions resource enabled
 - seeded roles, users, and permissions
+- custom permissions with translation keys (`workbench::workbench.custom_permissions.*`)
 
 Infrastructure notes:
 
 - `testbench.yaml` uses `:memory:` SQLite for tests; `workbench/.env` overrides to file-based SQLite and file session for `serve`
+- `testbench.yaml` must have `discovers.config: true` nested under the `workbench:` key (NOT at root level) — this loads `workbench/config/*.php` automatically
 - `docker-compose.yml` sets `PHP_CLI_SERVER_WORKERS=4` to handle concurrent Livewire requests
 - `testbench.yaml` provider names must use single quotes with single backslashes (YAML single-quote strings are literal)
 - `TestCase::setUp()` registers `DataStore` as singleton to work around Filament's `bind()` registration

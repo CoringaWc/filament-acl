@@ -16,7 +16,7 @@ class PostsRelationManagerPermissionTest extends TestCase
 {
     public function test_it_resolves_the_relation_manager_subject_for_view_any(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $owner = User::factory()->create();
         Post::factory()->count(2)->for($owner)->create();
 
@@ -36,7 +36,7 @@ class PostsRelationManagerPermissionTest extends TestCase
 
     public function test_it_denies_the_relation_manager_when_the_permission_is_missing(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->createUser();
         $owner = User::factory()->create();
 
         $this->actingAs($actor);

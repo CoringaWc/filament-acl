@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Workbench\App\Filament\Resources\Categories;
 
+use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
 use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -27,6 +28,7 @@ use Workbench\App\Filament\Resources\Categories\Pages\ViewCategory;
 use Workbench\App\Filament\Resources\Categories\RelationManagers\PostsRelationManager;
 use Workbench\App\Models\Category;
 
+#[CustomPermissionActions(['archive'])]
 class CategoryResource extends Resource
 {
     use HasResourcePermissions;
@@ -34,14 +36,6 @@ class CategoryResource extends Resource
     protected static ?string $model = Category::class;
 
     protected static \BackedEnum | string | null $navigationIcon = Heroicon::OutlinedTag;
-
-    /**
-     * @return array<int, string>
-     */
-    public static function getPermissionCustomActions(): array
-    {
-        return ['archive'];
-    }
 
     public static function getModelLabel(): string
     {

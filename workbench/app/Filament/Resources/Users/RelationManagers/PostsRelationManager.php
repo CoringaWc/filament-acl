@@ -31,6 +31,11 @@ class PostsRelationManager extends RelationManager
         $this->resetErrorBag();
     }
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema->components([

@@ -909,6 +909,8 @@ class PermissionResource extends Resource
             $innerTabs->vertical();
         }
 
+        $innerTabs->contained(static::getPluginOption('usesInnerTabsContained', false));
+
         return $innerTabs;
     }
 
@@ -1182,7 +1184,7 @@ class PermissionResource extends Resource
         foreach ($query->get() as $permission) {
             /** @var Model $permission */
             $name = (string) $permission->getAttribute('name');
-            $label = $customPermissions[$name] ?? $name;
+            $label = __($customPermissions[$name] ?? $name);
             $options[$permission->getKey()] = $label;
         }
 

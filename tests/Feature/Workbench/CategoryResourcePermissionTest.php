@@ -10,13 +10,12 @@ use CoringaWc\FilamentAcl\Tests\TestCase;
 use Workbench\App\Filament\Resources\Categories\CategoryResource;
 use Workbench\App\Filament\Resources\Posts\Resources\Categories\CategoryResource as NestedPostCategoryResource;
 use Workbench\App\Models\Category;
-use Workbench\App\Models\User;
 
 class CategoryResourcePermissionTest extends TestCase
 {
     public function test_it_allows_the_main_category_resource_when_the_user_has_the_matching_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         $this->grantOwnerPermission($user, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
@@ -33,7 +32,7 @@ class CategoryResourcePermissionTest extends TestCase
 
     public function test_it_allows_the_nested_post_categories_resource_using_canonical_category_permission(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
 
         // Nested resource shares permissions with canonical CategoryResource.
         // Granting the canonical permission should authorize the nested resource access.
@@ -52,7 +51,7 @@ class CategoryResourcePermissionTest extends TestCase
 
     public function test_it_denies_the_nested_post_categories_resource_when_no_canonical_permission_exists(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createUser();
         $this->actingAs($user);
 
         $response = $this->app->make(PermissionGate::class)->inspect(

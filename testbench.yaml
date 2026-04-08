@@ -9,6 +9,10 @@
 providers:
   - 'CoringaWc\FilamentAcl\FilamentPermissionServiceProvider'
 
+workbench:
+  discovers:
+    config: true
+
 env:
   APP_KEY: "base64:AA9D6lV1RUWJXz7HP2oZPelGkgcXBB1k9QxFegMkNO8="
   APP_ENV: testing

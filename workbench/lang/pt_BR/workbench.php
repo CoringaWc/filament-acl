@@ -94,6 +94,10 @@ return [
         'review' => 'Em Revisão',
         'locked' => 'Bloqueado',
     ],
+    'custom_permissions' => [
+        'export' => 'Exportar conteúdo',
+        'publish' => 'Publicar conteúdo',
+    ],
     'relation_managers' => [
         'posts' => 'Posts',
         'categories' => 'Categorias',

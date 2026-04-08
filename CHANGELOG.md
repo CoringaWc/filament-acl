@@ -2,6 +2,23 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## Unreleased
+
+### Breaking Changes
+
+- Removed `callbacks` config section (`resolve_permission_subject_using`, `build_permission_key_using`); use `FilamentPermission` facade or `FilamentPermissionManager` directly
+- Removed `subject_resolver`, `permission_key_builder`, `permission_store` config keys; override via container binding in your service provider
+
+### Added
+
+- `relation_managers.actions` config key for customizing default RM permission actions
+- `relation_managers.exclude` config key for excluding RM classes from sync/UI discovery
+- `inner_tabs.contained` config key and `innerTabsContained()` plugin method
+
+### Fixed
+
+- RM-specific actions (associate, attach, detach, detachAny, dissociate, dissociateAny) now included in default config
+
 ## 1.0.0 - 202X-XX-XX
 
 - initial release

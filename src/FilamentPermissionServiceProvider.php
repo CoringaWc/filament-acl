@@ -41,24 +41,9 @@ class FilamentPermissionServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->singleton(FilamentPermissionManager::class);
-        $this->app->singleton(ResolvesPermissionSubject::class, function ($app): ResolvesPermissionSubject {
-            /** @var class-string<ResolvesPermissionSubject> $resolver */
-            $resolver = config('filament-acl.subject_resolver', ConfiguredPermissionSubjectResolver::class);
-
-            return $app->make($resolver);
-        });
-        $this->app->singleton(BuildsPermissionKey::class, function ($app): BuildsPermissionKey {
-            /** @var class-string<BuildsPermissionKey> $builder */
-            $builder = config('filament-acl.permission_key_builder', DefaultPermissionKeyBuilder::class);
-
-            return $app->make($builder);
-        });
-        $this->app->singleton(StoresPermissions::class, function ($app): StoresPermissions {
-            /** @var class-string<StoresPermissions> $store */
-            $store = config('filament-acl.permission_store', SpatiePermissionStore::class);
-
-            return $app->make($store);
-        });
+        $this->app->singleton(ResolvesPermissionSubject::class, ConfiguredPermissionSubjectResolver::class);
+        $this->app->singleton(BuildsPermissionKey::class, DefaultPermissionKeyBuilder::class);
+        $this->app->singleton(StoresPermissions::class, SpatiePermissionStore::class);
         $this->app->singleton(ConfiguredPermissionSubjectResolver::class);
         $this->app->singleton(DefaultPermissionActionRegistry::class);
         $this->app->singleton(DefaultPermissionKeyBuilder::class);
@@ -67,21 +52,6 @@ class FilamentPermissionServiceProvider extends PackageServiceProvider
         $this->app->singleton(PermissionGate::class);
         $this->app->singleton(SpatiePermissionStore::class);
         $this->app->alias(FilamentPermissionManager::class, 'filament-acl.permission-manager');
-
-        /** @var array<string, mixed> $callbacks */
-        $callbacks = config('filament-acl.callbacks', []);
-
-        if ($callbacks['resolve_permission_subject_using'] ?? null) {
-            $this->app->make(FilamentPermissionManager::class)->resolvePermissionSubjectUsing(
-                $callbacks['resolve_permission_subject_using'],
-            );
-        }
-
-        if ($callbacks['build_permission_key_using'] ?? null) {
-            $this->app->make(FilamentPermissionManager::class)->buildPermissionKeyUsing(
-                $callbacks['build_permission_key_using'],
-            );
-        }
     }
 
     public function packageBooted(): void

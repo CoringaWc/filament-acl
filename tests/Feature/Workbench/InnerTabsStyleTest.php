@@ -33,6 +33,28 @@ class InnerTabsStyleTest extends TestCase
         self::assertTrue($this->isVertical($tabs), 'Inner tabs should be vertical when configured');
     }
 
+    // ── contained ──────────────────────────────────────────────────────────
+
+    public function test_inner_tabs_are_not_contained_when_config_is_false(): void
+    {
+        config(['filament-acl.resources.permissions.inner_tabs.contained' => false]);
+
+        $tabs = $this->callMakeInnerTabs('test_tabs', []);
+
+        self::assertInstanceOf(Tabs::class, $tabs);
+        self::assertFalse($tabs->isContained(), 'Inner tabs should not be contained when configured false');
+    }
+
+    public function test_inner_tabs_are_contained_when_config_is_true(): void
+    {
+        config(['filament-acl.resources.permissions.inner_tabs.contained' => true]);
+
+        $tabs = $this->callMakeInnerTabs('test_tabs', []);
+
+        self::assertInstanceOf(Tabs::class, $tabs);
+        self::assertTrue($tabs->isContained(), 'Inner tabs should be contained when configured true');
+    }
+
     // ── sections collapsed ─────────────────────────────────────────────────
 
     public function test_sections_collapsed_default_is_false(): void

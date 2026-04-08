@@ -109,10 +109,10 @@ abstract class TestCase extends Orchestra
         $app['config']->set('filament-acl.database.panel_scope.on_roles', false);
         $app['config']->set('filament-acl.database.panel_scope.on_permissions', false);
         $app['config']->set('filament-acl.custom_permissions', [
-            'content.export' => 'Exportar conteúdo',
+            'content.export' => 'workbench::workbench.custom_permissions.export',
             [
                 'name' => 'content.publish',
-                'label' => 'Publicar conteúdo',
+                'label' => 'workbench::workbench.custom_permissions.publish',
                 'panels' => ['admin'],
             ],
         ]);
@@ -157,6 +157,14 @@ abstract class TestCase extends Orchestra
 
         return $this->app->make(FilamentPermissionManager::class)
             ->defaultPermissionKeyBuilder($ability, $subject);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function createUser(array $attributes = []): User
+    {
+        return User::factory()->create($attributes);
     }
 
     protected function grantOwnerPermission(
