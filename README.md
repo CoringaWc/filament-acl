@@ -18,6 +18,10 @@ It was designed for complex panels where the same Eloquent model can appear in m
 - Protected roles such as `super_admin` can be hidden from UI and optionally bypass package-level checks.
 - The package ships with an optional built-in roles and permissions resource.
 
+## Screenshot
+
+![Permissions Edit Page](docs/images/permissions-edit.png)
+
 ## Core Principles
 
 - Trait-first. No `BaseResource` or `BaseRelationManager` is required.

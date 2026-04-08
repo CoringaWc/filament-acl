@@ -1,0 +1,28 @@
+{
+  "name": "html",
+  "version": "1.0.0",
+  "description": "[![Latest Version on Packagist](https://img.shields.io/packagist/v/coringawc/filament-acl.svg?style=flat-square)](https://packagist.org/packages/coringawc/filament-acl) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/coringawc/filament-acl/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/coringawc/filament-acl/actions?query=workflow%3Arun-tests+branch%3Amain) [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/coringawc/filament-acl/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/coringawc/filament-acl/actions?query=workflow%3A%22Fix+PHP+code+styling%22+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/coringawc/filament-acl.svg?style=flat-square)](https://packagist.org/packages/coringawc/filament-acl)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CoringaWc/filament-acl.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CoringaWc/filament-acl/issues"
+  },
+  "homepage": "https://github.com/CoringaWc/filament-acl#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "prettier": "^3.8.1"
+  }
+}
