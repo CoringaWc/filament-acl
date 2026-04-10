@@ -23,7 +23,7 @@ trait ChecksPermission
         $resolvedAction = $this->resolvePermissionAction($ability, $action);
 
         if ($resolvedAction === null) {
-            return Response::allow();
+            return $this->fallbackWhenNoPermissionAction($user, $ability);
         }
 
         $permissionKey = app(BuildsPermissionKey::class)->build($ability, $resolvedAction);
@@ -33,6 +33,28 @@ trait ChecksPermission
         }
 
         return Response::deny("Missing permission [{$permissionKey}].");
+    }
+
+    /**
+     * Called when checkPermission receives no PermissionAction context (i.e. the call
+     * did not go through HasResourcePermissions::can() and no PermissionAction was built).
+     *
+     * By default, reads `filament-acl.policies.null_action_behavior` from config:
+     * - 'deny'  (default): safe — denies access rather than silently allowing.
+     * - 'allow': original behavior — allows access (useful during gradual migrations).
+     *
+     * Override this method in a concrete policy to implement custom fallback logic,
+     * such as resolving a subject from an associated Resource class.
+     */
+    protected function fallbackWhenNoPermissionAction(mixed $user, string $ability): Response
+    {
+        $behavior = config('filament-acl.policies.null_action_behavior', 'deny');
+
+        if ($behavior === 'allow') {
+            return Response::allow();
+        }
+
+        return Response::deny('No permission context provided for ability [' . $ability . '].');
     }
 
     protected function denyUnlessPermitted(

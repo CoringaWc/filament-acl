@@ -238,6 +238,25 @@ return [
     |
     */
     'policies' => [
+        /*
+        |----------------------------------------------------------------------
+        | Null Action Behavior
+        |----------------------------------------------------------------------
+        |
+        | Controls how the ChecksPermission trait behaves when checkPermission
+        | is called without a PermissionAction context (e.g. direct gate calls
+        | or custom Actions that don't go through HasResourcePermissions::can()).
+        |
+        | - 'deny'  (default): deny access. Safer — prevents accidental open gates.
+        | - 'allow': original behavior — allow when no context is present.
+        |             Only use this during a gradual migration.
+        |
+        | Individual policies can override this by implementing the
+        | fallbackWhenNoPermissionAction() method from the ChecksPermission trait.
+        |
+        */
+        'null_action_behavior' => 'deny',
+
         'path' => app_path('Policies'),
         'generate' => true,
         'merge' => true,
