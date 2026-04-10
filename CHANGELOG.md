@@ -2,6 +2,10 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.0.1 - 2026-04-10
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.0.0...v1.0.1
+
 ## v1.0.0 - 2026-04-08
 
 **Full Changelog**: https://github.com/CoringaWc/filament-acl/commits/v1.0.0
