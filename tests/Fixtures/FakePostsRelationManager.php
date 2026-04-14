@@ -6,6 +6,8 @@ namespace CoringaWc\FilamentAcl\Tests\Fixtures;
 
 use CoringaWc\FilamentAcl\RelationManagers\Concerns\HasRelationManagerPermissions;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 
 class FakePostsRelationManager extends RelationManager
 {
@@ -16,6 +18,16 @@ class FakePostsRelationManager extends RelationManager
     public static function getPermissionSubject(): ?string
     {
         return 'TenantPosts';
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return 'Fallback posts';
+    }
+
+    public static function getIcon(Model $ownerRecord, string $pageClass): string | \BackedEnum | null
+    {
+        return Heroicon::OutlinedDocumentText;
     }
 
     /**

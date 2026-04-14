@@ -13,8 +13,10 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Workbench\App\Filament\Concerns\EnsuresValidationErrorBag;
 
 class PostsRelationManager extends RelationManager
@@ -23,6 +25,16 @@ class PostsRelationManager extends RelationManager
     use HasRelationManagerPermissions;
 
     protected static string $relationship = 'posts';
+
+    public static function getRelationshipTitle(): string
+    {
+        return __('workbench::workbench.relation_managers.posts');
+    }
+
+    public static function getIcon(Model $ownerRecord, string $pageClass): string | \BackedEnum | null
+    {
+        return Heroicon::OutlinedDocumentText;
+    }
 
     public function mount(): void
     {

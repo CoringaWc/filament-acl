@@ -10,11 +10,13 @@ use Filament\Clusters\Cluster;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Filament\Resources\Pages\PageRegistration;
 use Filament\Resources\RelationManagers\RelationGroup;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\RelationManagers\RelationManagerConfiguration;
 use Filament\Resources\Resource;
 use Filament\Widgets\Widget;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Throwable;
@@ -83,7 +85,10 @@ class PermissionOwnerDiscovery
                 continue;
             }
 
-            $label = $this->resolveRelationManagerLabel($relationManagerClass);
+            $ownerRecord = $this->makeRelationManagerOwnerRecord($panel, $resourceRegistration);
+            $pageClass = $this->resolveRelationManagerPageClass($panel, $resourceRegistration);
+            $label = $this->resolveRelationManagerLabel($relationManagerClass, $ownerRecord, $pageClass);
+            $icon = $this->resolveRelationManagerIcon($relationManagerClass, $ownerRecord, $pageClass);
             $relatedResource = $relationManagerClass::getRelatedResource();
 
             $registrations[] = new PermissionOwnerRegistration(
@@ -95,6 +100,7 @@ class PermissionOwnerDiscovery
                 sectionLabel: $resourceRegistration->label,
                 relatedResource: is_string($relatedResource) ? $relatedResource : null,
                 meta: [
+                    'icon' => $icon,
                     'resource_owner_class' => $resourceRegistration->ownerClass,
                     'resource_registration_key' => $resourceRegistration->registrationKey,
                 ],
@@ -358,8 +364,20 @@ class PermissionOwnerDiscovery
         return Str::headline(Str::beforeLast(class_basename($widgetClass), 'Widget'));
     }
 
-    protected function resolveRelationManagerLabel(string $relationManagerClass): string
+    protected function resolveRelationManagerLabel(string $relationManagerClass, ?Model $ownerRecord = null, ?string $pageClass = null): string
     {
+        if (($ownerRecord instanceof Model) && filled($pageClass) && method_exists($relationManagerClass, 'getTitle')) {
+            try {
+                $title = $relationManagerClass::getTitle($ownerRecord, $pageClass);
+
+                if (filled($title)) {
+                    return (string) $title;
+                }
+            } catch (Throwable) {
+                //
+            }
+        }
+
         if (method_exists($relationManagerClass, 'getRelationshipTitle')) {
             try {
                 $title = $relationManagerClass::getRelationshipTitle();
@@ -373,6 +391,73 @@ class PermissionOwnerDiscovery
         }
 
         return Str::headline(Str::beforeLast(class_basename($relationManagerClass), 'RelationManager'));
+    }
+
+    protected function resolveRelationManagerIcon(string $relationManagerClass, ?Model $ownerRecord = null, ?string $pageClass = null): mixed
+    {
+        if (($ownerRecord instanceof Model) && filled($pageClass) && method_exists($relationManagerClass, 'getIcon')) {
+            try {
+                return $relationManagerClass::getIcon($ownerRecord, $pageClass);
+            } catch (Throwable) {
+                //
+            }
+        }
+
+        return null;
+    }
+
+    protected function makeRelationManagerOwnerRecord(Panel $panel, PermissionOwnerRegistration $resourceRegistration): ?Model
+    {
+        if (! is_subclass_of($resourceRegistration->ownerClass, Resource::class)) {
+            return null;
+        }
+
+        /** @var class-string<Model>|null $modelClass */
+        $modelClass = $this->evaluateInPanel(
+            panel: $panel,
+            callback: fn (): string => $this->evaluateResourceWithConfiguration(
+                $resourceRegistration->ownerClass,
+                $resourceRegistration->registrationKey,
+                static fn (): string => $resourceRegistration->ownerClass::getModel(),
+            ),
+        );
+
+        if (! is_string($modelClass) || ! is_subclass_of($modelClass, Model::class)) {
+            return null;
+        }
+
+        return new $modelClass;
+    }
+
+    protected function resolveRelationManagerPageClass(Panel $panel, PermissionOwnerRegistration $resourceRegistration): ?string
+    {
+        if (! is_subclass_of($resourceRegistration->ownerClass, Resource::class)) {
+            return null;
+        }
+
+        /** @var array<string, PageRegistration> $pages */
+        $pages = $this->evaluateInPanel(
+            panel: $panel,
+            callback: fn (): array => $this->evaluateResourceWithConfiguration(
+                $resourceRegistration->ownerClass,
+                $resourceRegistration->registrationKey,
+                static fn (): array => $resourceRegistration->ownerClass::getPages(),
+            ),
+        );
+
+        foreach (['view', 'edit', 'index', 'create'] as $pageName) {
+            $pageRegistration = $pages[$pageName] ?? null;
+
+            if ($pageRegistration !== null) {
+                return $pageRegistration->getPage();
+            }
+        }
+
+        foreach ($pages as $pageRegistration) {
+            return $pageRegistration->getPage();
+        }
+
+        return null;
     }
 
     protected function evaluateResourceWithConfiguration(

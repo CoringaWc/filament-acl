@@ -510,13 +510,7 @@ class PermissionResource extends Resource
         ));
 
         foreach ($node['relation_managers'] as $relationManager) {
-            $childTabs[] = Tab::make($relationManager['label'])
-                ->schema([
-                    static::makePermissionCheckboxList(
-                        statePath: $relationManager['state_path'],
-                        options: $relationManager['options'],
-                    ),
-                ]);
+            $childTabs[] = static::buildRelationManagerTab($relationManager);
         }
 
         $schema = [];
@@ -631,13 +625,7 @@ class PermissionResource extends Resource
         ));
 
         foreach ($node['relation_managers'] as $relationManager) {
-            $childTabs[] = Tab::make($relationManager['label'])
-                ->schema([
-                    static::makePermissionCheckboxList(
-                        statePath: $relationManager['state_path'],
-                        options: $relationManager['options'],
-                    ),
-                ]);
+            $childTabs[] = static::buildRelationManagerTab($relationManager);
         }
 
         $hasNested = $childTabs !== [];
@@ -699,13 +687,7 @@ class PermissionResource extends Resource
         ));
 
         foreach ($node['relation_managers'] as $relationManager) {
-            $childTabs[] = Tab::make($relationManager['label'])
-                ->schema([
-                    static::makePermissionCheckboxList(
-                        statePath: $relationManager['state_path'],
-                        options: $relationManager['options'],
-                    ),
-                ]);
+            $childTabs[] = static::buildRelationManagerTab($relationManager);
         }
 
         $hasNested = $childTabs !== [];
@@ -818,6 +800,7 @@ class PermissionResource extends Resource
                 'owner_class' => $relationManagerRegistration->ownerClass,
                 'registration_key' => $relationManagerRegistration->registrationKey,
                 'label' => $relationManagerRegistration->label ?? static::resolveOwnerLabel($relationManagerRegistration),
+                'icon' => $relationManagerRegistration->meta['icon'] ?? null,
                 'state_path' => static::makePermissionStatePath(
                     'relation_managers',
                     $relationManagerRegistration->ownerClass,
@@ -828,6 +811,29 @@ class PermissionResource extends Resource
         }
 
         return $nodes;
+    }
+
+    /**
+     * @param  array<string, mixed>  $relationManager
+     */
+    protected static function buildRelationManagerTab(array $relationManager): Tab
+    {
+        $permissionCount = count($relationManager['options']);
+
+        $tab = Tab::make($relationManager['label'])
+            ->badge($permissionCount > 0 ? $permissionCount : null)
+            ->schema([
+                static::makePermissionCheckboxList(
+                    statePath: $relationManager['state_path'],
+                    options: $relationManager['options'],
+                ),
+            ]);
+
+        if (($relationManager['icon'] ?? null) !== null) {
+            $tab->icon($relationManager['icon']);
+        }
+
+        return $tab;
     }
 
     /**
