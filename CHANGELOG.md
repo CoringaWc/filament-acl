@@ -2,6 +2,14 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.0 - 2026-04-14
+
+### Highlights
+
+- add #[PermissionActions([...])] as a declarative equivalent to getPermissionActions()
+- support the new attribute across resources, relation managers, pages, and widgets
+- add unit coverage and documentation for the new attribute
+
 ## v1.0.4 - 2026-04-14
 
 **Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.0.3...v1.0.4
