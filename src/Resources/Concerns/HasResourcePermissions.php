@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoringaWc\FilamentAcl\Resources\Concerns;
 
 use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
+use CoringaWc\FilamentAcl\Attributes\PermissionActions as PermissionActionsAttribute;
 use CoringaWc\FilamentAcl\Attributes\PermissionPanel as PermissionPanelAttribute;
 use CoringaWc\FilamentAcl\Attributes\PermissionSubject as PermissionSubjectAttribute;
 use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
@@ -94,6 +95,12 @@ trait HasResourcePermissions
     {
         if (! static::shouldRegisterPermissions()) {
             return [];
+        }
+
+        $attribute = PermissionAttributeReader::read(static::class, PermissionActionsAttribute::class);
+
+        if ($attribute !== null) {
+            return $attribute->actions;
         }
 
         $sharedPermissionOwner = static::resolvePermissionOwnerClass();

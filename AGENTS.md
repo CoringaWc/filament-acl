@@ -51,6 +51,7 @@ Permission attributes are read from the concrete class only.
 This applies to attributes such as:
 
 - `#[PermissionSubject(...)]`
+- `#[PermissionActions([...])]`
 - `#[CustomPermissionActions([...])]`
 - `#[RegisterPermissions(false)]`
 
@@ -323,7 +324,7 @@ Default permission actions are defined per owner type in config:
 
 `DefaultPermissionActionRegistry` reads these config keys and supplies defaults to each owner type. Resources merge these with any custom actions from `getPermissionCustomActions()`.
 
-Each owner trait exposes `getPermissionActions()` which returns the final merged, deduplicated list of actions. Override this method only when you need to completely replace the action list for a specific owner.
+Each owner trait exposes `getPermissionActions()` which returns the final merged, deduplicated list of actions. Override this method only when you need to completely replace the action list for a specific owner, or use `#[PermissionActions([...])]` when you want the same behavior declaratively on the concrete class.
 
 ### Exclude Lists
 

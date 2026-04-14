@@ -7,6 +7,7 @@ namespace CoringaWc\FilamentAcl\Tests\Unit;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePost;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePostPolicy;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePostResource;
+use CoringaWc\FilamentAcl\Tests\Fixtures\FakePostResourceWithPermissionActionsAttribute;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakeUser;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 use Illuminate\Support\Facades\Gate;
@@ -33,5 +34,10 @@ class HasResourcePermissionsTest extends TestCase
     {
         self::assertContains('viewAny', FakePostResource::getPermissionActions());
         self::assertContains('publish', FakePostResource::getPermissionActions());
+    }
+
+    public function test_it_uses_permission_actions_attribute_to_replace_the_full_list(): void
+    {
+        self::assertSame(['view'], FakePostResourceWithPermissionActionsAttribute::getPermissionActions());
     }
 }

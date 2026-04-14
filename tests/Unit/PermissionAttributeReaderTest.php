@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoringaWc\FilamentAcl\Tests\Unit;
 
 use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
+use CoringaWc\FilamentAcl\Attributes\PermissionActions;
 use CoringaWc\FilamentAcl\Attributes\PermissionPanel;
 use CoringaWc\FilamentAcl\Attributes\PermissionSubject;
 use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
@@ -55,6 +56,14 @@ class PermissionAttributeReaderTest extends TestCase
         self::assertSame(['archive', 'export'], $result->actions);
     }
 
+    public function test_read_permission_actions_attribute(): void
+    {
+        $result = PermissionAttributeReader::read(ClassWithPermissionActions::class, PermissionActions::class);
+
+        self::assertInstanceOf(PermissionActions::class, $result);
+        self::assertSame(['view'], $result->actions);
+    }
+
     public function test_read_register_permissions_false(): void
     {
         $result = PermissionAttributeReader::read(ClassWithRegisterPermissionsFalse::class, RegisterPermissions::class);
@@ -99,6 +108,9 @@ class ClassWithSharedOwner {}
 
 #[CustomPermissionActions(['archive', 'export'])]
 class ClassWithCustomActions {}
+
+#[PermissionActions(['view'])]
+class ClassWithPermissionActions {}
 
 #[RegisterPermissions(false)]
 class ClassWithRegisterPermissionsFalse {}

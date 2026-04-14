@@ -252,9 +252,11 @@ public static function getPermissionCustomActions(): array
 
 Default resource and relation-manager actions are added automatically. `getPermissionCustomActions()` is only for non-standard actions.
 
-When working with inherited owners, remember that PHP attributes are read from the concrete class only. If a child resource, relation manager, page, or widget still needs `PermissionSubject`, `CustomPermissionActions`, or `RegisterPermissions`, redeclare the attribute on the child class or override the corresponding method.
+When working with inherited owners, remember that PHP attributes are read from the concrete class only. If a child resource, relation manager, page, or widget still needs `PermissionSubject`, `PermissionActions`, `CustomPermissionActions`, or `RegisterPermissions`, redeclare the attribute on the child class or override the corresponding method.
 
 ### Permission Actions
+
+You can replace the full action list either by overriding `getPermissionActions()` or by using the `#[PermissionActions([...])]` attribute.
 
 ```php
 /**
@@ -266,6 +268,16 @@ public static function getPermissionActions(): array
         ...app(DefaultPermissionActionRegistry::class)->forResource(),
         ...static::getPermissionCustomActions(),
     ]));
+}
+```
+
+```php
+use CoringaWc\FilamentAcl\Attributes\PermissionActions;
+
+#[PermissionActions(['view'])]
+class MyWalletResource extends Resource
+{
+    use HasResourcePermissions;
 }
 ```
 
@@ -774,6 +786,7 @@ As an alternative to overriding methods, you can use PHP 8 attributes on your cl
 <?php
 
 use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
+use CoringaWc\FilamentAcl\Attributes\PermissionActions;
 use CoringaWc\FilamentAcl\Attributes\PermissionPanel;
 use CoringaWc\FilamentAcl\Attributes\PermissionSubject;
 use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
@@ -783,6 +796,7 @@ use Filament\Resources\Resource;
 
 #[PermissionSubject('custom-subject')]
 #[SharedPermissionOwner(CategoryResource::class)]
+#[PermissionActions(['view'])]
 #[CustomPermissionActions(['archive', 'export'])]
 #[RegisterPermissions(false)]
 #[PermissionPanel('admin')]
@@ -800,6 +814,7 @@ Available attributes:
 | ------------------------------------ | ------------------------------ | --------------------------------------- |
 | `#[PermissionSubject('...')]`        | `getPermissionSubject()`       | Resource, RelationManager, Page, Widget |
 | `#[SharedPermissionOwner(X::class)]` | `getSharedPermissionOwner()`   | Resource, RelationManager, Page, Widget |
+| `#[PermissionActions([...])]`        | `getPermissionActions()`       | Resource, RelationManager, Page, Widget |
 | `#[CustomPermissionActions([...])]`  | `getPermissionCustomActions()` | Resource, RelationManager, Page, Widget |
 | `#[RegisterPermissions(false)]`      | `shouldRegisterPermissions()`  | Resource, RelationManager, Page, Widget |
 | `#[PermissionPanel('admin')]`        | `getPermissionPanel()`         | Resource, RelationManager, Page, Widget |
