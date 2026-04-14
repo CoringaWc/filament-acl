@@ -155,6 +155,17 @@ class PostsRelationManager extends RelationManager
 }
 ```
 
+#### Relation Manager Metadata In The Permissions UI
+
+The built-in permissions resource resolves relation-manager tab metadata from Filament's public API instead of relying on `getTabComponent()` internals:
+
+- `getTitle(Model $ownerRecord, string $pageClass)` is used first when owner context is available
+- `getRelationshipTitle()` is used as fallback when owner context is not available
+- `getIcon(Model $ownerRecord, string $pageClass)` is used for the tab icon
+- the permission-tab badge reflects the number of permission options synced for that relation manager
+
+If you want the permissions UI to match the real Filament tab, implement `getTitle()` and `getIcon()` on the relation manager.
+
 #### Delegating To A Related Resource
 
 By default, each relation manager maintains its own permission set. If you prefer that a relation manager delegates authorization to a related resource instead:
@@ -241,6 +252,8 @@ public static function getPermissionCustomActions(): array
 
 Default resource and relation-manager actions are added automatically. `getPermissionCustomActions()` is only for non-standard actions.
 
+When working with inherited owners, remember that PHP attributes are read from the concrete class only. If a child resource, relation manager, page, or widget still needs `PermissionSubject`, `CustomPermissionActions`, or `RegisterPermissions`, redeclare the attribute on the child class or override the corresponding method.
+
 ### Permission Actions
 
 ```php
@@ -258,6 +271,8 @@ public static function getPermissionActions(): array
 
 Override this method to completely replace the action list for a specific owner. By default it merges config-driven defaults from `filament-acl.policies.methods` with any custom actions.
 
+For relation managers, overriding `getPermissionActions()` is the recommended way to narrow the permission surface when the real table only exposes a subset of the default RM actions. This avoids showing unrelated abilities like `associate`, `attach`, or `dissociate` in the permissions UI for owners that do not use them.
+
 The config-driven defaults are:
 
 ```php
@@ -269,6 +284,33 @@ The config-driven defaults are:
         'create',
         'update',
         'delete',
+    ],
+],
+```
+
+Relation managers have their own default action list through `filament-acl.relation_managers.actions`. The package now ships the full set of Filament-inherent RM abilities by default:
+
+```php
+'relation_managers' => [
+    'actions' => [
+        'viewAny',
+        'view',
+        'create',
+        'update',
+        'delete',
+        'deleteAny',
+        'forceDelete',
+        'forceDeleteAny',
+        'restore',
+        'restoreAny',
+        'replicate',
+        'reorder',
+        'associate',
+        'attach',
+        'detach',
+        'detachAny',
+        'dissociate',
+        'dissociateAny',
     ],
 ],
 ```
@@ -288,6 +330,18 @@ When this returns `false`:
 - the owner is hidden from the built-in permissions resource
 - package-level permission checks for that owner are skipped
 - only your domain checks in the policy keep running
+
+You can also express the same opt-out declaratively:
+
+```php
+use CoringaWc\FilamentAcl\Attributes\RegisterPermissions;
+
+#[RegisterPermissions(false)]
+class InternalOnlyResource extends Resource
+{
+    use HasResourcePermissions;
+}
+```
 
 ### Share Permissions With Another Owner
 

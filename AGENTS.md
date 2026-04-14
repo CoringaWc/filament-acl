@@ -39,9 +39,22 @@ The following methods are optional overrides and should stay optional:
 - `shouldRegisterPermissions(): bool`
 - `getSharedPermissionOwner(): ?string`
 - `getPermissionCustomActions(): array`
+- `getPermissionActions(): array`
 - `getPermissionPanel(): ?string`
 
 Do not add required static properties when a method override is enough.
+
+### Attribute Resolution Is Concrete-Class Only
+
+Permission attributes are read from the concrete class only.
+
+This applies to attributes such as:
+
+- `#[PermissionSubject(...)]`
+- `#[CustomPermissionActions([...])]`
+- `#[RegisterPermissions(false)]`
+
+Do not assume these attributes are inherited from a parent Resource, RelationManager, Page, or Widget. If a child class needs the same permission metadata, redeclare the attribute or override the corresponding method.
 
 ### Keep Permission Naming Consistent
 
@@ -245,6 +258,8 @@ When adding new abilities, add both camelCase and snake_case keys to `resources/
 
 Section toggle labels live under `resources.permissions.edit.tabs.section_toggle`.
 
+For relation-manager custom actions, preserve compatibility between camelCase action names declared in PHP and snake_case ability keys used by policies and translations.
+
 ## Subject Resolution Strategy
 
 `SubjectResolutionStrategy` is a backed enum at `CoringaWc\FilamentAcl\Enums\SubjectResolutionStrategy`.
@@ -258,6 +273,36 @@ Values:
 This enum is not yet integrated into the config. When implementing the integration, update `FluentSubjectResolver` to read the strategy from config and switch behavior accordingly.
 
 ## Permission Actions Configuration
+
+Keep `filament-acl.relation_managers.actions` aligned with Filament's inherent relation-manager authorization surface. This includes the broader action set used by the package today:
+
+- `viewAny`
+- `view`
+- `create`
+- `update`
+- `delete`
+- `deleteAny`
+- `forceDelete`
+- `forceDeleteAny`
+- `restore`
+- `restoreAny`
+- `replicate`
+- `reorder`
+- `associate`
+- `attach`
+- `detach`
+- `detachAny`
+- `dissociate`
+- `dissociateAny`
+
+At the owner level, prefer narrowing the real permission surface with `getPermissionActions()` when a specific relation manager only exposes a subset of those actions.
+
+Recent behavior that must remain documented and preserved:
+
+- relation-manager permission tabs resolve labels from `getTitle()` first and `getRelationshipTitle()` as fallback
+- relation-manager permission tabs resolve icons from `getIcon()`
+- relation-manager permission-tab badges reflect the number of permission options for that owner
+- `RegisterPermissions(false)` is the package-native way to hide an owner from sync and the permissions UI
 
 Default permission actions are defined per owner type in config:
 
