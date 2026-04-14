@@ -64,4 +64,29 @@ class RelationManagerPermissionUiFallbackTest extends TestCase
         self::assertSame(2, $tab->getBadge());
         self::assertSame(Heroicon::OutlinedDocumentText, $tab->getIcon());
     }
+
+    public function test_relation_manager_permission_actions_include_filament_inherent_actions_and_custom_actions(): void
+    {
+        self::assertSame([
+            'viewAny',
+            'view',
+            'create',
+            'update',
+            'delete',
+            'deleteAny',
+            'forceDelete',
+            'forceDeleteAny',
+            'restore',
+            'restoreAny',
+            'replicate',
+            'reorder',
+            'associate',
+            'attach',
+            'detach',
+            'detachAny',
+            'dissociate',
+            'dissociateAny',
+            'publish',
+        ], FakePostsRelationManager::getPermissionActions());
+    }
 }

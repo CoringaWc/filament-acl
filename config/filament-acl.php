@@ -344,6 +344,11 @@ return [
     | - actions: default abilities generated/synchronized for relation managers
     |   that use HasRelationManagerPermissions. Includes resource-level actions
     |   plus RM-specific ones (associate, attach, detach, etc.).
+    |   Full list available:
+    |   viewAny, view, create, update, delete, deleteAny,
+    |   forceDelete, forceDeleteAny, restore, restoreAny,
+    |   replicate, reorder, associate, attach, detach,
+    |   detachAny, dissociate, dissociateAny
     | - exclude: classes that should be ignored by sync/UI discovery even if
     |   they use the package traits.
     |
@@ -356,6 +361,13 @@ return [
             'create',
             'update',
             'delete',
+            'deleteAny',
+            'forceDelete',
+            'forceDeleteAny',
+            'restore',
+            'restoreAny',
+            'replicate',
+            'reorder',
             'associate',
             'attach',
             'detach',
