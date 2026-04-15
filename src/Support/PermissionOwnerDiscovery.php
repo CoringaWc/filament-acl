@@ -16,6 +16,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\RelationManagers\RelationManagerConfiguration;
 use Filament\Resources\Resource;
 use Filament\Widgets\Widget;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -351,10 +352,15 @@ class PermissionOwnerDiscovery
     {
         if (method_exists($widgetClass, 'getHeading')) {
             try {
-                $heading = $widgetClass::getHeading();
+                $widget = app($widgetClass);
+                $heading = $widget->getHeading();
 
-                if (is_string($heading) && filled($heading)) {
-                    return $heading;
+                if ($heading instanceof Htmlable) {
+                    $heading = $heading->toHtml();
+                }
+
+                if (filled($heading)) {
+                    return trim(strip_tags((string) $heading));
                 }
             } catch (Throwable) {
                 //

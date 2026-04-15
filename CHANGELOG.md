@@ -2,6 +2,14 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.1 - 2026-04-14
+
+### Fixed
+
+- Resolves widget permission labels from instantiated widget headings, including Htmlable headings, instead of falling back to class names in the permissions UI
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.0...v1.1.1
+
 ## v1.1.0 - 2026-04-14
 
 ### Highlights
