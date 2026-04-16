@@ -33,29 +33,22 @@ services:
     working_dir: /var/www/html
     user: "${WWWUSER:-1000}:${WWWGROUP:-1000}"
     environment:
-      COMPOSER_HOME: /tmp/composer
-      COMPOSER_CACHE_DIR: /tmp/composer/cache
-      NPM_CONFIG_CACHE: /tmp/.npm
-      XDG_CACHE_HOME: /tmp/.cache
-      PLAYWRIGHT_BROWSERS_PATH: /tmp/.cache/ms-playwright
+      COMPOSER_HOME: /var/www/html/.docker/composer
+      COMPOSER_CACHE_DIR: /var/www/html/.docker/composer/cache
+      NPM_CONFIG_CACHE: /var/www/html/.docker/npm-cache
+      XDG_CACHE_HOME: /var/www/html/.docker/cache
+      PLAYWRIGHT_BROWSERS_PATH: /var/www/html/.docker/cache/ms-playwright
       WORKBENCH_PORT: ${WORKBENCH_PORT:-8001}
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
     ports:
       - "${WORKBENCH_PORT:-8001}:${WORKBENCH_PORT:-8001}"
     volumes:
       - .:/var/www/html
-      - composer-cache:/tmp/composer/cache
-      - npm-cache:/tmp/.npm
-      - playwright-browsers:/tmp/.cache/ms-playwright
     command:
       - sh
       - -lc
       - >
+        mkdir -p .docker/composer/cache .docker/npm-cache .docker/cache/ms-playwright &&
         touch vendor/orchestra/testbench-core/laravel/database/database.sqlite &&
         composer run bootstrap:workbench &&
         exec php vendor/bin/testbench serve --host=0.0.0.0 --port=${WORKBENCH_PORT:-8001} --ansi
-
-volumes:
-  composer-cache:
-  npm-cache:
-  playwright-browsers:

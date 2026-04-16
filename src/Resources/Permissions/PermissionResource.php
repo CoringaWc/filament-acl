@@ -108,95 +108,102 @@ class PermissionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Grid::make()
-                ->schema([
-                    Section::make()
-                        ->schema([
-                            TextInput::make('name')
-                                ->label(__('filament-acl::filament-acl.resources.permissions.fields.name'))
-                                ->required()
-                                ->maxLength(255)
-                                ->rule(
-                                    Rule::notIn([
-                                        Utils::getProtectedRoleName(),
-                                    ]),
-                                )
-                                ->unique(
-                                    ignoreRecord: true,
-                                    modifyRuleUsing: function (Unique $rule): Unique {
-                                        $rule->where('guard_name', static::getDefaultGuardName());
-
-                                        if (static::shouldScopeRolesToCurrentPanel()) {
-                                            $rule->where(
-                                                static::getPanelColumnName(),
-                                                static::resolveCurrentPanelScopeValue(),
-                                            );
-                                        }
-
-                                        return $rule;
-                                    },
-                                ),
-                            Toggle::make('select_all')
-                                ->label(__('filament-acl::filament-acl.resources.permissions.fields.select_all'))
-                                ->helperText(__('filament-acl::filament-acl.resources.permissions.fields.select_all_help'))
-                                ->onIcon('heroicon-s-shield-check')
-                                ->offIcon('heroicon-s-shield-exclamation')
-                                ->live()
-                                ->afterStateUpdated(function (LivewireComponent $livewire, Set $set, bool $state): void {
-                                    static::toggleEntitiesViaSelectAll($livewire, $set, $state);
-                                })
-                                ->dehydrated(false),
-                            Hidden::make('guard_name')
-                                ->default(static::getDefaultGuardName()),
-                            Hidden::make(static::getPanelColumnName())
-                                ->default(static::resolveCurrentPanelScopeValue())
-                                ->dehydrated(static::shouldScopeRolesToCurrentPanel()),
-                        ])
-                        ->columns(2)
-                        ->columnSpanFull(),
-                    Tabs::make('permission_groups_tabs')
-                        ->tabs(static::getPermissionManagementTabs())
-                        ->columnSpanFull(),
-                ])
-                ->columnSpanFull(),
+            static::makePermissionFormGrid(),
         ]);
+    }
+
+    protected static function makePermissionFormGrid(): Grid
+    {
+        return Grid::make()
+            ->schema([
+                static::makePermissionDetailsSection(),
+                static::makePermissionTabsComponent(),
+            ])
+            ->columnSpanFull();
+    }
+
+    protected static function makePermissionDetailsSection(): Section
+    {
+        return Section::make()
+            ->schema([
+                static::makeNameInput(),
+                static::makeSelectAllToggle(),
+                static::makeGuardNameHidden(),
+                static::makePanelScopeHidden(),
+            ])
+            ->columns(2)
+            ->columnSpanFull();
+    }
+
+    protected static function makePermissionTabsComponent(): Tabs
+    {
+        return Tabs::make('permission_groups_tabs')
+            ->tabs(static::getPermissionManagementTabs())
+            ->columnSpanFull();
+    }
+
+    protected static function makeNameInput(): TextInput
+    {
+        return TextInput::make('name')
+            ->label(__('filament-acl::filament-acl.resources.permissions.fields.name'))
+            ->required()
+            ->maxLength(255)
+            ->rule(
+                Rule::notIn([
+                    Utils::getProtectedRoleName(),
+                ]),
+            )
+            ->unique(
+                ignoreRecord: true,
+                modifyRuleUsing: function (Unique $rule): Unique {
+                    $rule->where('guard_name', static::getDefaultGuardName());
+
+                    if (static::shouldScopeRolesToCurrentPanel()) {
+                        $rule->where(
+                            static::getPanelColumnName(),
+                            static::resolveCurrentPanelScopeValue(),
+                        );
+                    }
+
+                    return $rule;
+                },
+            );
+    }
+
+    protected static function makeSelectAllToggle(): Toggle
+    {
+        return Toggle::make('select_all')
+            ->label(__('filament-acl::filament-acl.resources.permissions.fields.select_all'))
+            ->helperText(__('filament-acl::filament-acl.resources.permissions.fields.select_all_help'))
+            ->onIcon('heroicon-s-shield-check')
+            ->offIcon('heroicon-s-shield-exclamation')
+            ->live()
+            ->afterStateUpdated(function (LivewireComponent $livewire, Set $set, bool $state): void {
+                static::toggleEntitiesViaSelectAll($livewire, $set, $state);
+            })
+            ->dehydrated(false);
+    }
+
+    protected static function makeGuardNameHidden(): Hidden
+    {
+        return Hidden::make('guard_name')
+            ->default(static::getDefaultGuardName());
+    }
+
+    protected static function makePanelScopeHidden(): Hidden
+    {
+        return Hidden::make(static::getPanelColumnName())
+            ->default(static::resolveCurrentPanelScopeValue())
+            ->dehydrated(static::shouldScopeRolesToCurrentPanel());
     }
 
     public static function table(Table $table): Table
     {
         $table
             ->deferLoading()
-            ->columns([
-                TextColumn::make('name')
-                    ->label(__('filament-acl::filament-acl.resources.permissions.columns.name'))
-                    ->weight('font-medium')
-                    ->formatStateUsing(static fn (string $state): string => Str::headline($state))
-                    ->searchable(),
-                TextColumn::make('guard_name')
-                    ->label(__('filament-acl::filament-acl.resources.permissions.columns.guard_name'))
-                    ->badge()
-                    ->searchable(),
-                TextColumn::make(static::getPanelColumnName())
-                    ->label(__('filament-acl::filament-acl.resources.permissions.columns.panel'))
-                    ->badge()
-                    ->visible(static fn (): bool => static::shouldScopeRolesToCurrentPanel()),
-                TextColumn::make('permissions_count')
-                    ->label(__('filament-acl::filament-acl.resources.permissions.columns.permissions_count'))
-                    ->counts('permissions')
-                    ->badge()
-                    ->color('success')
-                    ->sortable(),
-                TextColumn::make('updated_at')
-                    ->label(__('filament-acl::filament-acl.resources.permissions.columns.updated_at'))
-                    ->since()
-                    ->dateTimeTooltip('Y-m-d H:i:s')
-                    ->sortable(),
-            ])
+            ->columns(static::getPermissionTableColumns())
             ->recordUrl(null)
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ]);
+            ->recordActions(static::getPermissionTableRecordActions());
 
         $configureUsing = static::getPluginTableConfigurator();
 
@@ -205,6 +212,75 @@ class PermissionResource extends Resource
         }
 
         return $table;
+    }
+
+    /**
+     * @return array<int, TextColumn>
+     */
+    protected static function getPermissionTableColumns(): array
+    {
+        return [
+            static::makePermissionNameColumn(),
+            static::makePermissionGuardNameColumn(),
+            static::makePermissionPanelColumn(),
+            static::makePermissionCountColumn(),
+            static::makePermissionUpdatedAtColumn(),
+        ];
+    }
+
+    protected static function makePermissionNameColumn(): TextColumn
+    {
+        return TextColumn::make('name')
+            ->label(__('filament-acl::filament-acl.resources.permissions.columns.name'))
+            ->weight('font-medium')
+            ->formatStateUsing(static fn (string $state): string => Str::headline($state))
+            ->searchable();
+    }
+
+    protected static function makePermissionGuardNameColumn(): TextColumn
+    {
+        return TextColumn::make('guard_name')
+            ->label(__('filament-acl::filament-acl.resources.permissions.columns.guard_name'))
+            ->badge()
+            ->searchable();
+    }
+
+    protected static function makePermissionPanelColumn(): TextColumn
+    {
+        return TextColumn::make(static::getPanelColumnName())
+            ->label(__('filament-acl::filament-acl.resources.permissions.columns.panel'))
+            ->badge()
+            ->visible(static fn (): bool => static::shouldScopeRolesToCurrentPanel());
+    }
+
+    protected static function makePermissionCountColumn(): TextColumn
+    {
+        return TextColumn::make('permissions_count')
+            ->label(__('filament-acl::filament-acl.resources.permissions.columns.permissions_count'))
+            ->counts('permissions')
+            ->badge()
+            ->color('success')
+            ->sortable();
+    }
+
+    protected static function makePermissionUpdatedAtColumn(): TextColumn
+    {
+        return TextColumn::make('updated_at')
+            ->label(__('filament-acl::filament-acl.resources.permissions.columns.updated_at'))
+            ->since()
+            ->dateTimeTooltip('Y-m-d H:i:s')
+            ->sortable();
+    }
+
+    /**
+     * @return array<int, Action>
+     */
+    protected static function getPermissionTableRecordActions(): array
+    {
+        return [
+            EditAction::make(),
+            DeleteAction::make(),
+        ];
     }
 
     protected static function getPluginTableConfigurator(): ?\Closure

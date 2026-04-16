@@ -5,6 +5,7 @@
 build
 composer.lock
 coverage
+.docker
 node_modules
 package-lock.json
 test-results

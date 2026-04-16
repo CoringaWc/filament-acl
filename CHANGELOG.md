@@ -2,6 +2,18 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.2 - 2026-04-15
+
+### Changed
+
+- refactored `PermissionResource` form and table builders into smaller protected methods for safer reuse and extension
+
+### Fixed
+
+- moved workbench npm, composer, and playwright caches into workspace-local `.docker/` directories so the php container no longer crashes on root-owned `/tmp/.npm` cache files
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.1...v1.1.2
+
 ## v1.1.1 - 2026-04-14
 
 ### Fixed
