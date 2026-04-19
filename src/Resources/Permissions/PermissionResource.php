@@ -177,11 +177,38 @@ class PermissionResource extends Resource
             ->helperText(__('filament-acl::filament-acl.resources.permissions.fields.select_all_help'))
             ->onIcon('heroicon-s-shield-check')
             ->offIcon('heroicon-s-shield-exclamation')
-            ->live()
-            ->afterStateUpdated(function (LivewireComponent $livewire, Set $set, bool $state): void {
-                static::toggleEntitiesViaSelectAll($livewire, $set, $state);
-            })
+            ->afterStateUpdatedJs(static fn (): string => static::buildSelectAllJs())
             ->dehydrated(false);
+    }
+
+    /**
+     * Build a JavaScript expression that toggles all permission checkboxes based on master toggle state.
+     *
+     * Uses a guard variable to prevent cascading: when section toggle actions
+     * programmatically set `select_all`, this callback is suppressed to avoid
+     * clearing permissions across all sections.
+     */
+    protected static function buildSelectAllJs(): string
+    {
+        $allFieldDefs = static::getPermissionFieldDefinitions();
+        $statements = [];
+
+        foreach ($allFieldDefs as $statePath => $optionKeys) {
+            $encoded = json_encode(array_values($optionKeys), JSON_THROW_ON_ERROR);
+            $statements[] = "\$set('{$statePath}', \$state ? {$encoded} : [])";
+        }
+
+        $setStatements = implode(";\n", $statements);
+        $bulkSync = static::buildJsBulkToggleSync();
+
+        return <<<JS
+        if (window.__aclMasterToggleGuard) {
+            window.__aclMasterToggleGuard = false;
+        } else {
+            {$setStatements};
+            {$bulkSync}
+        }
+        JS;
     }
 
     protected static function makeGuardNameHidden(): Hidden
@@ -497,7 +524,7 @@ class PermissionResource extends Resource
 
         foreach ($resourceTree as $sectionLabel => $nodes) {
             $sectionIcon = static::resolveResourceSectionIcon($nodes);
-            $allStatePaths = static::collectAllNodeStatePaths($nodes);
+            $statePathsWithOptions = static::collectAllNodeStatePathsWithOptions($nodes);
             $sectionId = Str::slug($sectionLabel) . '_' . substr(md5($sectionLabel), 0, 8);
 
             $isStandalone = static::isSectionStandaloneByLabel($nodes);
@@ -536,9 +563,10 @@ class PermissionResource extends Resource
                 ->collapsible()
                 ->collapsed(static::getPluginOption('usesSectionsCollapsed', false))
                 ->persistCollapsed(static::getPluginOption('usesSectionsPersistCollapsed', true))
-                ->afterHeader(fn (): array => [
-                    static::buildGroupToggleAction('section_' . $sectionId, $allStatePaths),
-                ]);
+                ->afterHeader(
+                    fn (): array =>
+                    static::buildGroupToggleActions('section_' . $sectionId, $statePathsWithOptions),
+                );
 
             if ($sectionIcon !== null) {
                 $section->icon($sectionIcon);
@@ -707,13 +735,11 @@ class PermissionResource extends Resource
         $hasNested = $childTabs !== [];
 
         if ($hasNested) {
-            $allStatePaths = static::collectAllNodeStatePaths([$node]);
+            $statePathsWithOptions = static::collectAllNodeStatePathsWithOptions([$node]);
             $uniqueId = Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8);
 
             $schema = [
-                Actions::make([
-                    static::buildGroupToggleAction('resource_' . $uniqueId, $allStatePaths),
-                ])->alignment(Alignment::End),
+                ...static::buildGroupToggleActions('resource_' . $uniqueId, $statePathsWithOptions),
 
                 Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
                     ->schema([
@@ -769,13 +795,11 @@ class PermissionResource extends Resource
         $hasNested = $childTabs !== [];
 
         if ($hasNested) {
-            $allStatePaths = static::collectAllNodeStatePaths([$node]);
+            $statePathsWithOptions = static::collectAllNodeStatePathsWithOptions([$node]);
             $uniqueId = Str::slug($node['label']) . '_' . substr(md5($node['owner_class']), 0, 8);
 
             $schema = [
-                Actions::make([
-                    static::buildGroupToggleAction('node_' . $uniqueId, $allStatePaths),
-                ])->alignment(Alignment::End),
+                ...static::buildGroupToggleActions('node_' . $uniqueId, $statePathsWithOptions),
 
                 Fieldset::make(__('filament-acl::filament-acl.resources.permissions.fields.permissions'))
                     ->schema([
@@ -978,7 +1002,8 @@ class PermissionResource extends Resource
             ->options($options)
             ->bulkToggleable()
             ->columns(2)
-            ->columnSpanFull();
+            ->columnSpanFull()
+            ->afterStateUpdatedJs(static fn (): string => static::buildCheckboxListMasterSyncJs());
     }
 
     /**
@@ -1004,59 +1029,131 @@ class PermissionResource extends Resource
     // ─── Toggle Actions ─────────────────────────────────────────
 
     /**
-     * Build a toggle action that selects/deselects all permissions for a group of nodes.
+     * Build toggle actions that select/deselect all permissions using client-side JavaScript.
      *
-     * Follows the same pattern as siasgfacil's buildGroupToggleAction.
+     * Returns two Actions components (schema-level): "select all" (visible when not all
+     * selected) and "deselect all" (visible when all selected), both using actionJs()
+     * for zero server requests. visibleJs() is on the Actions wrapper (schema component),
+     * not on Action itself.
      *
-     * @param  array<int, string>  $statePaths
+     * @param  array<string, array<int, int|string>>  $statePathsWithOptions
+     * @return array<int, Actions>
      */
-    protected static function buildGroupToggleAction(string $id, array $statePaths): Action
+    protected static function buildGroupToggleActions(string $id, array $statePathsWithOptions): array
     {
-        return Action::make('toggle_' . $id)
-            ->label(function (LivewireComponent $livewire) use ($statePaths): string {
-                $allSelected = static::collectCheckboxListsRecursive($livewire)
-                    ->filter(fn (CheckboxList $c): bool => in_array($c->getName(), $statePaths, true))
-                    ->every(fn (CheckboxList $component): bool => count(array_keys($component->getOptions())) === count(
-                        static::resolveSelectedCheckboxValues($component),
-                    ));
+        $allSelectedCondition = static::buildJsAllSelectedCondition($statePathsWithOptions);
+        $selectAllJs = static::buildJsSetState($statePathsWithOptions, selectAll: true);
+        $deselectAllJs = static::buildJsSetState($statePathsWithOptions, selectAll: false);
+        $masterSyncJs = static::buildJsMasterToggleSync();
+        $bulkToggleSync = static::buildJsBulkToggleSync();
+        $guard = 'window.__aclMasterToggleGuard = true';
+        $guardTimeout = "setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)";
 
-                return $allSelected
-                    ? __('filament-acl::filament-acl.resources.permissions.section_toggle.deselect_all')
-                    : __('filament-acl::filament-acl.resources.permissions.section_toggle.select_all');
-            })
-            ->color('primary')
-            ->link()
-            ->action(function (LivewireComponent $livewire, Set $set) use ($statePaths): void {
-                $components = static::collectCheckboxListsRecursive($livewire)
-                    ->filter(fn (CheckboxList $c): bool => in_array($c->getName(), $statePaths, true));
+        return [
+            Actions::make([
+                Action::make('select_all_' . $id)
+                    ->label(__('filament-acl::filament-acl.resources.permissions.section_toggle.select_all'))
+                    ->color('primary')
+                    ->link()
+                    ->actionJs("{$guard};\n{$selectAllJs};\n{$masterSyncJs};\n{$guardTimeout};\n{$bulkToggleSync}"),
+            ])->visibleJs("!({$allSelectedCondition})"),
 
-                $allSelected = $components->every(fn (CheckboxList $component): bool => count(array_keys($component->getOptions())) === count(
-                    static::resolveSelectedCheckboxValues($component),
-                ));
-
-                $components->each(function (CheckboxList $component) use ($allSelected): void {
-                    $state = $allSelected ? [] : array_keys($component->getOptions());
-                    $component->state($state);
-                });
-
-                static::toggleSelectAllViaEntities($livewire, $set);
-            });
+            Actions::make([
+                Action::make('deselect_all_' . $id)
+                    ->label(__('filament-acl::filament-acl.resources.permissions.section_toggle.deselect_all'))
+                    ->color('primary')
+                    ->link()
+                    ->actionJs("{$guard};\n{$deselectAllJs};\n\$set('select_all', false);\n{$guardTimeout};\n{$bulkToggleSync}"),
+            ])->visibleJs($allSelectedCondition),
+        ];
     }
 
     /**
-     * Collect all CheckboxList components from the Livewire form, including concealed tabs.
+     * Build a JavaScript expression that evaluates to true when all checkboxes in the given state paths are selected.
      *
-     * @return Collection<int, CheckboxList>
+     * @param  array<string, array<int, int|string>>  $statePathsWithOptions
      */
-    protected static function collectCheckboxListsRecursive(LivewireComponent $livewire): Collection
+    protected static function buildJsAllSelectedCondition(array $statePathsWithOptions): string
     {
-        /** @phpstan-ignore-next-line */
-        $allComponents = $livewire->form->getFlatComponents(withHidden: true);
+        $conditions = [];
 
-        /** @var array<int, mixed> $allComponents */
-        return collect($allComponents)
-            ->filter(fn (mixed $component): bool => $component instanceof CheckboxList)
-            ->values();
+        foreach ($statePathsWithOptions as $statePath => $optionKeys) {
+            $count = count($optionKeys);
+            $conditions[] = "(\$get('{$statePath}') ?? []).length === {$count}";
+        }
+
+        return $conditions !== [] ? implode(' && ', $conditions) : 'true';
+    }
+
+    /**
+     * Build JavaScript statements to set all checkbox lists to selected or empty.
+     *
+     * @param  array<string, array<int, int|string>>  $statePathsWithOptions
+     */
+    protected static function buildJsSetState(array $statePathsWithOptions, bool $selectAll): string
+    {
+        $statements = [];
+
+        foreach ($statePathsWithOptions as $statePath => $optionKeys) {
+            if ($selectAll) {
+                $encoded = json_encode(array_values($optionKeys), JSON_THROW_ON_ERROR);
+                $statements[] = "\$set('{$statePath}', {$encoded})";
+            } else {
+                $statements[] = "\$set('{$statePath}', [])";
+            }
+        }
+
+        return implode(";\n", $statements);
+    }
+
+    /**
+     * Build a JavaScript snippet that syncs each CheckboxList's internal bulkToggleable state.
+     *
+     * After programmatic $set(), the Alpine `areAllCheckboxesChecked` property
+     * inside each `checkboxListFormComponent` does not update automatically.
+     * The $set() updates the Livewire state which then propagates to the DOM
+     * via wire:model — this requires a microtask + Alpine tick to complete.
+     * We use setTimeout(0) to defer until after Livewire has flushed the
+     * DOM changes, then call checkIfAllCheckboxesAreChecked() via Alpine.$data().
+     */
+    protected static function buildJsBulkToggleSync(): string
+    {
+        return <<<'JS'
+        setTimeout(() => {
+            document.querySelectorAll('.fi-fo-checkbox-list').forEach(el => {
+                const data = Alpine.$data(el);
+                if (data?.checkIfAllCheckboxesAreChecked) {
+                    data.checkIfAllCheckboxesAreChecked();
+                }
+            });
+        }, 0)
+        JS;
+    }
+
+    /**
+     * Build a JavaScript statement that syncs the master select_all toggle based on all permission fields.
+     */
+    protected static function buildJsMasterToggleSync(): string
+    {
+        $allFieldDefs = static::getPermissionFieldDefinitions();
+        $condition = static::buildJsAllSelectedCondition($allFieldDefs);
+
+        return "\$set('select_all', {$condition})";
+    }
+
+    /**
+     * Build JavaScript for CheckboxList afterStateUpdatedJs that syncs the master toggle.
+     *
+     * Uses the guard to prevent the master toggle's own afterStateUpdatedJs from
+     * cascading and clearing all permissions when select_all is set to false.
+     */
+    protected static function buildCheckboxListMasterSyncJs(): string
+    {
+        $guard = 'window.__aclMasterToggleGuard = true';
+        $guardTimeout = "setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)";
+        $masterSync = static::buildJsMasterToggleSync();
+
+        return "{$guard};\n{$masterSync};\n{$guardTimeout}";
     }
 
     /**
@@ -1067,72 +1164,35 @@ class PermissionResource extends Resource
      */
     protected static function collectAllNodeStatePaths(array $nodes): array
     {
-        $paths = [];
+        return array_keys(static::collectAllNodeStatePathsWithOptions($nodes));
+    }
+
+    /**
+     * Recursively collect state paths with their option keys from nodes and their relation managers.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<string, array<int, int|string>>
+     */
+    protected static function collectAllNodeStatePathsWithOptions(array $nodes): array
+    {
+        $map = [];
 
         foreach ($nodes as $node) {
-            $paths[] = $node['state_path'];
+            $map[$node['state_path']] = array_keys($node['options']);
 
             foreach ($node['relation_managers'] as $rm) {
-                $paths[] = $rm['state_path'];
+                $map[$rm['state_path']] = array_keys($rm['options']);
             }
 
             if (! empty($node['children'])) {
-                $paths = array_merge($paths, static::collectAllNodeStatePaths($node['children']));
+                $map = array_merge($map, static::collectAllNodeStatePathsWithOptions($node['children']));
             }
         }
 
-        return $paths;
+        return $map;
     }
 
-    /**
-     * Update the global select_all toggle state based on all CheckboxLists.
-     */
-    protected static function toggleSelectAllViaEntities(LivewireComponent $livewire, Set $set): void
-    {
-        /** @var list<bool> $entitiesStates */
-        $entitiesStates = [];
 
-        foreach (static::collectCheckboxListsRecursive($livewire) as $component) {
-            $entitiesStates[] = count(array_keys($component->getOptions())) === count(
-                static::resolveSelectedCheckboxValues($component),
-            );
-        }
-
-        if (in_array(false, $entitiesStates, true)) {
-            $set('select_all', false);
-        } else {
-            $set('select_all', true);
-        }
-    }
-
-    /**
-     * Master toggle: select/deselect all CheckboxLists in the form.
-     */
-    protected static function toggleEntitiesViaSelectAll(LivewireComponent $livewire, Set $set, bool $state): void
-    {
-        static::collectCheckboxListsRecursive($livewire)
-            ->each(function (CheckboxList $component) use ($state): void {
-                $permissions = $state ? array_keys($component->getOptions()) : [];
-                $component->state($permissions);
-            });
-    }
-
-    /**
-     * @return array<int, int|string>
-     */
-    protected static function resolveSelectedCheckboxValues(CheckboxList $component): array
-    {
-        $state = $component->getState();
-
-        if (! is_array($state)) {
-            return [];
-        }
-
-        return array_values(array_unique(array_filter(
-            $state,
-            static fn (mixed $value): bool => is_int($value) || is_string($value),
-        )));
-    }
 
     /**
      * @return array<int|string, string>

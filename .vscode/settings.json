@@ -1,5 +1,31 @@
 {
-    "intelephense.environment.includePaths": [
-        "vendor"
-    ]
+    "intelephense.environment.includePaths": ["vendor"],
+    "intelephense.files.exclude": [
+        "**/.git/**",
+        "**/.svn/**",
+        "**/.hg/**",
+        "**/CVS/**",
+        "**/.DS_Store/**",
+        "**/node_modules/**",
+        "**/vendor/bin/**",
+        "**/vendor/rector/**",
+        "**/vendor/phpunit/**",
+        "**/vendor/phpstan/**",
+        "**/vendor/pestphp/**",
+        "**/vendor/nunomaduro/**",
+        "**/vendor/larastan/**"
+    ],
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/vendor/**": true,
+        "**/build/**": true
+    },
+    "files.exclude": {
+        "**/vendor": false
+    },
+    "search.exclude": {
+        "**/vendor": true,
+        "**/build": true
+    }
 }
