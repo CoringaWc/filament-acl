@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Spatie\Permission\Contracts\Role as RoleContract;
@@ -27,11 +28,17 @@ use Throwable;
 
 class Utils
 {
+    /**
+     * @return class-string<Model>
+     */
     public static function getRoleModel(): string
     {
         return app(StoresPermissions::class)->getRoleModel();
     }
 
+    /**
+     * @return class-string<Model>
+     */
     public static function getPermissionModel(): string
     {
         return app(StoresPermissions::class)->getPermissionModel();
@@ -48,6 +55,9 @@ class Utils
         return (string) config('auth.defaults.guard', 'web');
     }
 
+    /**
+     * @return class-string<Model>
+     */
     public static function getUserModel(?string $panelId = null): string
     {
         $guard = static::getAuthGuard(static::normalizePanelId($panelId));
@@ -128,6 +138,7 @@ class Utils
             return $query;
         }
 
+        /** @phpstan-ignore argument.type */
         return $query->where('name', '!=', static::getProtectedRoleName());
     }
 
@@ -185,11 +196,17 @@ class Utils
         $panelId = static::normalizePanelId($panelId);
         $roleModel = static::getRoleModel();
         $query = static::scopeRoleQueryToPanel(
-            $roleModel::query()->where('name', static::getProtectedRoleName()),
+            $roleModel::query()
+                ->where('name', static::getProtectedRoleName()), // @phpstan-ignore argument.type
             $panelId,
         );
 
-        return $query->pluck('id')->all();
+        /** @var array<int, int|string> $hiddenRoleIds */
+        $hiddenRoleIds = $query->get()
+            ->map(static fn (Model $role): int | string => $role->getKey())
+            ->all();
+
+        return $hiddenRoleIds;
     }
 
     /**
@@ -213,7 +230,8 @@ class Utils
         /** @var array<int, int|string> $assignedHiddenRoleIds */
         $assignedHiddenRoleIds = $record->roles()
             ->whereKey($hiddenRoleIds)
-            ->pluck('id')
+            ->get()
+            ->map(static fn (Model $role): int | string => $role->getKey())
             ->all();
 
         return array_values(array_unique([
@@ -231,7 +249,12 @@ class Utils
         $permissionModel = static::getPermissionModel();
         $query = static::scopePermissionQueryToPanel($permissionModel::query(), $panelId);
 
-        return $query->pluck('id')->all();
+        /** @var array<int, int|string> $permissionIds */
+        $permissionIds = $query->get()
+            ->map(static fn (Model $permission): int | string => $permission->getKey())
+            ->all();
+
+        return $permissionIds;
     }
 
     /**
@@ -302,7 +325,7 @@ class Utils
 
         try {
             $query = $roleRelation->getQuery()
-                ->where('name', static::getProtectedRoleName());
+                ->where('name', static::getProtectedRoleName()); // @phpstan-ignore argument.type
 
             $panelScope = app(FilamentPermissionManager::class)->getPanelScope($panelId);
 
@@ -378,6 +401,9 @@ class Utils
         return static::panelColumnExistsOnTable(static::getPermissionModel(), $column);
     }
 
+    /**
+     * @param  class-string<Model>  $modelClass
+     */
     public static function panelColumnExistsOnTable(string $modelClass, string $column): bool
     {
         try {
@@ -430,6 +456,7 @@ class Utils
                 break;
             }
 
+            /** @var class-string $resolvedOwnerClass */
             $resolvedOwnerClass = $sharedOwnerClass;
         }
 
@@ -523,16 +550,16 @@ class Utils
         };
     }
 
-    /**
-     * @param  class-string  $entityClass
-     */
     public static function defaultPermissionSubject(
         string $entityClass,
         PermissionEntityType $entityType,
         ?string $registrationKey = null,
     ): string {
-        $resolvedOwnerClass = static::resolvePermissionOwnerClass($entityClass);
+        $resolvedOwnerClass = class_exists($entityClass)
+            ? static::resolvePermissionOwnerClass($entityClass)
+            : $entityClass;
         $normalizedClass = str_replace('/', '\\', $resolvedOwnerClass);
+        /** @var Collection<int, string> $segments */
         $segments = collect(explode('\\', trim($normalizedClass, '\\')))
             ->filter()
             ->values();

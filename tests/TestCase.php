@@ -22,6 +22,7 @@ use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\ViewErrorBag;
 use Livewire\LivewireServiceProvider;
@@ -48,18 +49,16 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
 
-        Factory::guessFactoryNamesUsing(
-            static fn (string $modelName): string => 'Workbench\\Database\\Factories\\' . class_basename($modelName) . 'Factory',
-        );
+        Factory::guessFactoryNamesUsing(static fn (string $modelName): string => 'Workbench\\Database\\Factories\\' . class_basename($modelName) . 'Factory'); // @phpstan-ignore argument.type
 
         // Filament's SupportServiceProvider registers DataStore with bind() instead
         // of singleton(), causing a new DataStoreOverride instance on every resolution.
         // This breaks Livewire's WeakMap-based data store for full-page HTTP tests
         // because set() and get() use different instances with different WeakMaps.
-        $this->app->singleton(DataStore::class, DataStoreOverride::class);
+        $this->appContainer()->singleton(DataStore::class, DataStoreOverride::class);
 
-        $this->app['session.store']->start();
-        $this->app['view']->share('errors', new ViewErrorBag);
+        $this->appContainer()['session.store']->start();
+        $this->appContainer()['view']->share('errors', new ViewErrorBag);
 
         Filament::setCurrentPanel('admin');
         Filament::bootCurrentPanel();
@@ -150,14 +149,14 @@ abstract class TestCase extends Orchestra
         ?string $registrationKey = null,
         ?string $panelId = 'admin',
     ): string {
-        $subject = $this->app->make(ResolvesPermissionSubject::class)->resolve(
+        $subject = $this->appContainer()->make(ResolvesPermissionSubject::class)->resolve(
             entityClass: $ownerClass,
             entityType: $entityType,
             panelId: $panelId,
             registrationKey: $registrationKey,
         );
 
-        return $this->app->make(FilamentPermissionManager::class)
+        return $this->appContainer()->make(FilamentPermissionManager::class)
             ->defaultPermissionKeyBuilder($ability, $subject);
     }
 
@@ -167,6 +166,13 @@ abstract class TestCase extends Orchestra
     protected function createUser(array $attributes = []): User
     {
         return User::factory()->create($attributes);
+    }
+
+    protected function appContainer(): Application
+    {
+        assert($this->app instanceof Application);
+
+        return $this->app;
     }
 
     protected function grantOwnerPermission(

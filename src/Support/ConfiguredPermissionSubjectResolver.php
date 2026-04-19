@@ -22,7 +22,9 @@ class ConfiguredPermissionSubjectResolver implements ResolvesPermissionSubject
         ?string $registrationKey = null,
         array $meta = [],
     ): string {
-        $resolvedOwnerClass = Utils::resolvePermissionOwnerClass($entityClass);
+        $resolvedOwnerClass = class_exists($entityClass)
+            ? Utils::resolvePermissionOwnerClass($entityClass)
+            : $entityClass;
 
         if (method_exists($resolvedOwnerClass, 'getPermissionSubject')) {
             $entitySubject = $resolvedOwnerClass::getPermissionSubject();

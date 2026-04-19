@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace CoringaWc\FilamentAcl\Tests\Fixtures;
 
+use BackedEnum;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use UnitEnum;
 
 class FakeUser extends Authenticatable
 {
@@ -17,11 +19,15 @@ class FakeUser extends Authenticatable
         parent::__construct();
     }
 
+    /**
+     * @param  iterable<mixed>|string|UnitEnum  $abilities
+     * @param  array<int, mixed>  $arguments
+     */
     public function can($abilities, $arguments = []): bool
     {
-        if (is_array($abilities)) {
+        if (is_iterable($abilities)) {
             foreach ($abilities as $ability) {
-                if (! in_array($ability, $this->permissions, true)) {
+                if (! in_array($this->normalizeAbility($ability), $this->permissions, true)) {
                     return false;
                 }
             }
@@ -29,6 +35,19 @@ class FakeUser extends Authenticatable
             return true;
         }
 
-        return in_array((string) $abilities, $this->permissions, true);
+        return in_array($this->normalizeAbility($abilities), $this->permissions, true);
+    }
+
+    private function normalizeAbility(mixed $ability): string
+    {
+        if ($ability instanceof BackedEnum) {
+            return (string) $ability->value;
+        }
+
+        if ($ability instanceof UnitEnum) {
+            return $ability->name;
+        }
+
+        return (string) $ability;
     }
 }

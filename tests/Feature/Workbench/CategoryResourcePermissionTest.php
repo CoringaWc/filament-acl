@@ -20,7 +20,7 @@ class CategoryResourcePermissionTest extends TestCase
         $this->grantOwnerPermission($user, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Category::class,
@@ -39,7 +39,7 @@ class CategoryResourcePermissionTest extends TestCase
         $this->grantOwnerPermission($user, 'viewAny', CategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Category::class,
@@ -54,7 +54,7 @@ class CategoryResourcePermissionTest extends TestCase
         $user = $this->createUser();
         $this->actingAs($user);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Category::class,

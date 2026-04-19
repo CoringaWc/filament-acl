@@ -21,7 +21,7 @@ class PanelScopeTest extends TestCase
             'default' => 'global',
         ]);
 
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
 
         $manager->registerPanel('admin', strictMode: true, scopeRolesByPanel: true, scopePermissionsByPanel: false);
 

@@ -19,7 +19,7 @@ class ConfiguredPermissionSubjectResolverTest extends TestCase
 
         FilamentPermission::resolvePermissionSubjectUsing(static fn (): string => 'CallbackSubject');
 
-        $resolver = $this->app->make(ConfiguredPermissionSubjectResolver::class);
+        $resolver = $this->appContainer()->make(ConfiguredPermissionSubjectResolver::class);
 
         self::assertSame(
             'DeclaredSubject',
@@ -29,7 +29,7 @@ class ConfiguredPermissionSubjectResolverTest extends TestCase
 
     public function test_it_uses_a_generic_fallback_for_unknown_classes(): void
     {
-        $resolver = $this->app->make(ConfiguredPermissionSubjectResolver::class);
+        $resolver = $this->appContainer()->make(ConfiguredPermissionSubjectResolver::class);
 
         self::assertSame(
             'VendorPackageOrders',

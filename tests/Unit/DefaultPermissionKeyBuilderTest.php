@@ -12,7 +12,7 @@ class DefaultPermissionKeyBuilderTest extends TestCase
 {
     public function test_it_builds_keys_from_strings_and_permission_actions(): void
     {
-        $builder = $this->app->make(DefaultPermissionKeyBuilder::class);
+        $builder = $this->appContainer()->make(DefaultPermissionKeyBuilder::class);
         $permissionAction = PermissionAction::forResource(
             resourceClass: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
             subject: 'TenantUsers',

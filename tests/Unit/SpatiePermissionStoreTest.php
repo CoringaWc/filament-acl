@@ -12,7 +12,7 @@ class SpatiePermissionStoreTest extends TestCase
 {
     public function test_it_reads_models_and_panel_scope_from_configuration(): void
     {
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
         $manager->registerPanel(
             panelId: 'admin',
             strictMode: true,
@@ -20,7 +20,7 @@ class SpatiePermissionStoreTest extends TestCase
             scopePermissionsByPanel: false,
         );
 
-        $store = $this->app->make(SpatiePermissionStore::class);
+        $store = $this->appContainer()->make(SpatiePermissionStore::class);
 
         self::assertSame(config('filament-acl.models.permission'), $store->getPermissionModel());
         self::assertSame(config('filament-acl.models.role'), $store->getRoleModel());

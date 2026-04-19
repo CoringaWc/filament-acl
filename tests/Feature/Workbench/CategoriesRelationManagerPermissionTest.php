@@ -25,7 +25,7 @@ class CategoriesRelationManagerPermissionTest extends TestCase
         $this->grantOwnerPermission($actor, 'viewAny', NestedPostCategoryResource::class, PermissionEntityType::Resource);
         $this->actingAs($actor);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $actor,
             ability: 'viewAny',
             target: Category::class,
@@ -43,7 +43,7 @@ class CategoriesRelationManagerPermissionTest extends TestCase
 
         $this->actingAs($actor);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $actor,
             ability: 'viewAny',
             target: Category::class,

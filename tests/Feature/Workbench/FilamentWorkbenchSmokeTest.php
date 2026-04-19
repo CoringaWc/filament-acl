@@ -46,7 +46,8 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
         Livewire::test(ListPosts::class)
             ->assertOk()
-            ->assertSee($posts->pluck('title')->all());
+            ->assertSee($posts->pluck('title')->all()[0])
+            ->assertSee($posts->pluck('title')->all()[1]);
     }
 
     public function test_it_can_render_a_filament_resource_create_page_in_the_workbench(): void
@@ -87,7 +88,8 @@ class FilamentWorkbenchSmokeTest extends TestCase
 
         $this->get(CategoryResource::getUrl('index'))
             ->assertOk()
-            ->assertSee($categories->pluck('name')->all());
+            ->assertSee($categories->pluck('name')->all()[0])
+            ->assertSee($categories->pluck('name')->all()[1]);
     }
 
     public function test_it_can_render_a_filament_relation_manager_in_the_workbench(): void
@@ -104,7 +106,8 @@ class FilamentWorkbenchSmokeTest extends TestCase
             'pageClass' => EditUser::class,
         ])
             ->assertOk()
-            ->assertSee($posts->pluck('title')->all());
+            ->assertSee($posts->pluck('title')->all()[0])
+            ->assertSee($posts->pluck('title')->all()[1]);
     }
 
     public function test_it_can_render_a_post_categories_relation_manager_in_the_workbench(): void
@@ -122,7 +125,8 @@ class FilamentWorkbenchSmokeTest extends TestCase
             'pageClass' => EditPost::class,
         ])
             ->assertOk()
-            ->assertSee($categories->pluck('name')->all());
+            ->assertSee($categories->pluck('name')->all()[0])
+            ->assertSee($categories->pluck('name')->all()[1]);
     }
 
     public function test_it_can_reach_a_nested_post_categories_resource_route_over_http(): void

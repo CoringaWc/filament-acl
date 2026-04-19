@@ -13,14 +13,14 @@ class FilamentPermissionManagerTest extends TestCase
 {
     public function test_it_builds_default_permission_keys_from_config(): void
     {
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
 
         self::assertSame('ViewAny:TenantUsers', $manager->defaultPermissionKeyBuilder('viewAny', 'TenantUsers'));
     }
 
     public function test_it_stores_custom_callbacks(): void
     {
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
         $subjectResolver = static fn (): ?string => null;
         $permissionKeyBuilder = static fn (): ?string => null;
 
@@ -34,7 +34,7 @@ class FilamentPermissionManagerTest extends TestCase
 
     public function test_it_registers_panel_configuration(): void
     {
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
 
         $manager->registerPanel(
             panelId: 'admin',
@@ -55,7 +55,7 @@ class FilamentPermissionManagerTest extends TestCase
 
     public function test_it_builds_permission_keys_from_permission_actions(): void
     {
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
         $permissionAction = PermissionAction::forResource(
             resourceClass: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
             subject: 'Users',

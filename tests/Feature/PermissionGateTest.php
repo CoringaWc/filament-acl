@@ -21,7 +21,7 @@ class PermissionGateTest extends TestCase
     {
         config()->set('filament-acl.plugin.strict_mode', false);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new PermissionGateUser,
             ability: 'update',
             target: new PermissionGateModelWithoutPolicy,
@@ -38,7 +38,7 @@ class PermissionGateTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Strict authorization mode is enabled, but no policy was found');
 
-        $this->app->make(PermissionGate::class)->inspect(
+        $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new PermissionGateUser,
             ability: 'update',
             target: new PermissionGateModelWithoutPolicy,
@@ -51,7 +51,7 @@ class PermissionGateTest extends TestCase
         config()->set('filament-acl.plugin.strict_mode', false);
         Gate::policy(PermissionGateModelWithPartialPolicy::class, PermissionGatePartialPolicy::class);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new PermissionGateUser,
             ability: 'delete',
             target: new PermissionGateModelWithPartialPolicy,
@@ -69,7 +69,7 @@ class PermissionGateTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Strict authorization mode is enabled, but no [delete()] method was found');
 
-        $this->app->make(PermissionGate::class)->inspect(
+        $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new PermissionGateUser,
             ability: 'delete',
             target: new PermissionGateModelWithPartialPolicy,
@@ -88,7 +88,7 @@ class PermissionGateTest extends TestCase
             return null;
         });
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new PermissionGateUser,
             ability: 'update',
             target: new PermissionGateModelWithoutPolicy,
@@ -107,7 +107,7 @@ class PermissionGateTest extends TestCase
     {
         Gate::policy(PermissionGateModelWithPolicy::class, PermissionGatePolicy::class);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new PermissionGateUser,
             ability: 'update',
             target: new PermissionGateModelWithPolicy,

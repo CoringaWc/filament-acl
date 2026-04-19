@@ -9,6 +9,7 @@ use Filament\Facades\Filament;
 use Illuminate\Console\Command;
 use Illuminate\Console\Prohibitable;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Traits\HasRoles;
@@ -129,8 +130,10 @@ class AdminUserCommand extends Command
         $email = (string) ($this->option('email') ?? '');
 
         if (filled($email)) {
+            /** @var Builder<Model&object{email:mixed,name:mixed}> $userQuery */
+            $userQuery = $userModel::query();
             /** @var Model|null $existingUser */
-            $existingUser = $userModel::query()->where('email', $email)->first();
+            $existingUser = $userQuery->where('email', $email)->first();
 
             return $existingUser ?? $this->createUser($userModel, $email);
         }
@@ -148,7 +151,9 @@ class AdminUserCommand extends Command
             return $user;
         }
 
-        $users = $userModel::query()->limit(10)->get(['id', 'name', 'email']);
+        /** @var Builder<Model&object{id:mixed,name:mixed,email:mixed}> $userListQuery */
+        $userListQuery = $userModel::query();
+        $users = $userListQuery->limit(10)->get(['id', 'name', 'email']);
 
         $this->table(
             ['ID', 'Name', 'Email'],

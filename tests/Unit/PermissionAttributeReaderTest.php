@@ -45,7 +45,7 @@ class PermissionAttributeReaderTest extends TestCase
         $result = PermissionAttributeReader::read(ClassWithSharedOwner::class, SharedPermissionOwner::class);
 
         self::assertInstanceOf(SharedPermissionOwner::class, $result);
-        self::assertSame('App\Filament\Resources\PostResource', $result->ownerClass);
+        self::assertSame(SharedPermissionOwnerTarget::class, $result->ownerClass);
     }
 
     public function test_read_custom_permission_actions_attribute(): void
@@ -100,10 +100,12 @@ class PermissionAttributeReaderTest extends TestCase
 
 class ClassWithoutAttributes {}
 
+class SharedPermissionOwnerTarget {}
+
 #[PermissionSubject('custom-subject')]
 class ClassWithPermissionSubject {}
 
-#[SharedPermissionOwner('App\Filament\Resources\PostResource')]
+#[SharedPermissionOwner(SharedPermissionOwnerTarget::class)]
 class ClassWithSharedOwner {}
 
 #[CustomPermissionActions(['archive', 'export'])]

@@ -166,10 +166,20 @@ trait HasRelationManagerPermissions
                 : $relatedResource::getAuthorizationResponse($action, $record);
         }
 
+        $target = $record;
+
+        if ($target === null) {
+            $target = $this->getTable()->getModel();
+        }
+
+        if ($target === null) {
+            return Response::deny();
+        }
+
         return app(PermissionGate::class)->inspect(
             user: static::resolvePermissionUser(),
             ability: $action,
-            target: $record ?? $this->getTable()->getModel(),
+            target: $target,
             action: static::getPermissionGateArgument($action),
             shouldCheckPolicyExistence: static::shouldCheckPolicyExistence(),
         );

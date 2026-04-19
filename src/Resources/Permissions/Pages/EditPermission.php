@@ -34,7 +34,11 @@ class EditPermission extends EditRecord
         /** @var Model&RoleContract $record */
         $record = $this->record;
 
-        $assignedPermissionIds = $record->permissions()->pluck('id')->all();
+        /** @var array<int, int|string> $assignedPermissionIds */
+        $assignedPermissionIds = $record->permissions()
+            ->get()
+            ->map(static fn (Model $permission): int | string => $permission->getKey())
+            ->all();
 
         return [
             ...$data,

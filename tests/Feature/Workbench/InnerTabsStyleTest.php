@@ -7,6 +7,7 @@ namespace CoringaWc\FilamentAcl\Tests\Feature\Workbench;
 use CoringaWc\FilamentAcl\Resources\Permissions\PermissionResource;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use ReflectionMethod;
 
 class InnerTabsStyleTest extends TestCase
@@ -75,6 +76,9 @@ class InnerTabsStyleTest extends TestCase
 
     // ── helpers ─────────────────────────────────────────────────────────────
 
+    /**
+     * @param  array<int, Tab>  $tabs
+     */
     private function callMakeInnerTabs(string $name, array $tabs): Tabs
     {
         $method = new ReflectionMethod(PermissionResource::class, 'makeInnerTabs');

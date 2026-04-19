@@ -23,7 +23,7 @@ class PostsRelationManagerPermissionTest extends TestCase
         $this->grantOwnerPermission($actor, 'viewAny', PostsRelationManager::class, PermissionEntityType::RelationManager);
         $this->actingAs($actor);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $actor,
             ability: 'viewAny',
             target: Post::class,
@@ -41,7 +41,7 @@ class PostsRelationManagerPermissionTest extends TestCase
 
         $this->actingAs($actor);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $actor,
             ability: 'viewAny',
             target: Post::class,

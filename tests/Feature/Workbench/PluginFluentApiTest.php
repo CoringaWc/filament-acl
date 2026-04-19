@@ -11,6 +11,7 @@ use CoringaWc\FilamentAcl\Tests\TestCase;
 use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use ReflectionMethod;
 use Workbench\App\Filament\Resources\Posts\PostResource;
 
@@ -141,6 +142,9 @@ class PluginFluentApiTest extends TestCase
         return $method->invoke($discovery, $panel, $resourceClass);
     }
 
+    /**
+     * @param  array<int, Tab>  $tabs
+     */
     private function callMakeInnerTabs(string $name, array $tabs): Tabs
     {
         $method = new ReflectionMethod(PermissionResource::class, 'makeInnerTabs');

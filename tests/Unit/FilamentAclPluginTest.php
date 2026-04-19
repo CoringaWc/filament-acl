@@ -39,7 +39,7 @@ class FilamentAclPluginTest extends TestCase
 
         $plugin->register($panel);
 
-        $manager = $this->app->make(FilamentPermissionManager::class);
+        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
 
         self::assertTrue($manager->usesStrictMode('admin'));
         self::assertTrue($manager->scopesRolesByPanel('admin'));

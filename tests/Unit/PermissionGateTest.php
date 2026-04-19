@@ -19,7 +19,7 @@ class PermissionGateTest extends TestCase
 {
     public function test_it_allows_missing_policies_when_strict_mode_is_disabled(): void
     {
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new FakeUser,
             ability: 'viewAny',
             target: FakePost::class,
@@ -37,7 +37,7 @@ class PermissionGateTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Strict authorization mode is enabled, but no policy was found for [' . FakePost::class . '].');
 
-        $this->app->make(PermissionGate::class)->inspect(
+        $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new FakeUser,
             ability: 'viewAny',
             target: FakePost::class,
@@ -50,7 +50,7 @@ class PermissionGateTest extends TestCase
     {
         Gate::policy(FakePost::class, FakePolicyWithoutUpdate::class);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new FakeUser,
             ability: 'update',
             target: new FakePost,
@@ -69,7 +69,7 @@ class PermissionGateTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Strict authorization mode is enabled, but no [update()] method was found on [' . FakePolicyWithoutUpdate::class . '].');
 
-        $this->app->make(PermissionGate::class)->inspect(
+        $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new FakeUser,
             ability: 'update',
             target: new FakePost,
@@ -84,7 +84,7 @@ class PermissionGateTest extends TestCase
             ? Response::deny('Blocked by before callback.')
             : null);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new FakeUser,
             ability: 'viewAny',
             target: FakePost::class,
@@ -100,7 +100,7 @@ class PermissionGateTest extends TestCase
     {
         Gate::policy(FakePost::class, FakePostPolicy::class);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: new FakeUser(['Update:BlogPosts']),
             ability: 'update',
             target: new FakePost,

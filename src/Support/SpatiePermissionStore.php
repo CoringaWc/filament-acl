@@ -6,6 +6,7 @@ namespace CoringaWc\FilamentAcl\Support;
 
 use CoringaWc\FilamentAcl\Contracts\StoresPermissions;
 use CoringaWc\FilamentAcl\FilamentPermissionManager;
+use Illuminate\Database\Eloquent\Model;
 
 class SpatiePermissionStore implements StoresPermissions
 {
@@ -13,7 +14,7 @@ class SpatiePermissionStore implements StoresPermissions
 
     public function getPermissionModel(): string
     {
-        /** @var class-string $model */
+        /** @var class-string<Model> $model */
         $model = config('filament-acl.models.permission');
 
         return $model;
@@ -21,7 +22,7 @@ class SpatiePermissionStore implements StoresPermissions
 
     public function getRoleModel(): string
     {
-        /** @var class-string $model */
+        /** @var class-string<Model> $model */
         $model = config('filament-acl.models.role');
 
         return $model;

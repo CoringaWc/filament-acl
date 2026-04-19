@@ -20,7 +20,7 @@ class PostResourcePermissionTest extends TestCase
         $this->grantOwnerPermission($user, 'viewAny', PostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Post::class,
@@ -37,7 +37,7 @@ class PostResourcePermissionTest extends TestCase
         $this->grantOwnerPermission($user, 'viewAny', ModerationPostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Post::class,
@@ -58,7 +58,7 @@ class PostResourcePermissionTest extends TestCase
         $this->grantOwnerPermission($user, 'viewAny', ModerationPostResource::class, PermissionEntityType::Resource);
         $this->actingAs($user);
 
-        $response = $this->app->make(PermissionGate::class)->inspect(
+        $response = $this->appContainer()->make(PermissionGate::class)->inspect(
             user: $user,
             ability: 'viewAny',
             target: Post::class,

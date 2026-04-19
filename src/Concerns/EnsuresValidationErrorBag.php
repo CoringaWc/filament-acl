@@ -16,6 +16,9 @@ trait EnsuresValidationErrorBag
         return $this->filamentAclErrorBag ??= new MessageBag;
     }
 
+    /**
+     * @param  MessageBag|array<string, mixed>  $bag
+     */
     public function setErrorBag($bag): MessageBag
     {
         $resolvedErrorBag = $bag instanceof MessageBag ? $bag : new MessageBag($bag);

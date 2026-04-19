@@ -9,6 +9,7 @@ use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerRegistration;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 use Filament\Facades\Filament;
+use Filament\Panel;
 use Illuminate\Support\Facades\Artisan;
 use Spatie\Permission\Models\Permission;
 use Workbench\App\Filament\Pages\ContentInsightsPage;
@@ -58,6 +59,7 @@ class SyncPermissionsCommandTest extends TestCase
 
         $discovery = app(PermissionOwnerDiscovery::class);
         $panel = Filament::getCurrentPanel();
+        assert($panel instanceof Panel);
 
         $resourceRegistrations = $discovery->discoverResources($panel);
 

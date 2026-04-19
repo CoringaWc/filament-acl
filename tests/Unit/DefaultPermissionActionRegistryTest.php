@@ -11,7 +11,7 @@ class DefaultPermissionActionRegistryTest extends TestCase
 {
     public function test_it_returns_default_resource_actions_from_configuration(): void
     {
-        $registry = $this->app->make(DefaultPermissionActionRegistry::class);
+        $registry = $this->appContainer()->make(DefaultPermissionActionRegistry::class);
 
         self::assertSame([
             'viewAny',
@@ -30,7 +30,7 @@ class DefaultPermissionActionRegistryTest extends TestCase
             'dissociate', 'dissociateAny',
         ]]);
 
-        $registry = $this->app->make(DefaultPermissionActionRegistry::class);
+        $registry = $this->appContainer()->make(DefaultPermissionActionRegistry::class);
 
         self::assertContains('attach', $registry->forRelationManager());
         self::assertContains('dissociateAny', $registry->forRelationManager());

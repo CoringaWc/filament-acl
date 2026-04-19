@@ -822,6 +822,8 @@ class PermissionResource extends Resource
         $nodes = [];
 
         foreach (static::ownerDiscovery()->discoverResources($panel) as $resourceRegistration) {
+            /** @var class-string<resource> $resourceOwnerClass */
+            $resourceOwnerClass = $resourceRegistration->ownerClass;
             $options = static::getOwnerPermissionOptions(
                 ownerRegistration: $resourceRegistration,
             );
@@ -832,14 +834,14 @@ class PermissionResource extends Resource
 
             $nodes[] = [
                 'node_key' => $resourceRegistration->uniqueKey(),
-                'owner_class' => $resourceRegistration->ownerClass,
+                'owner_class' => $resourceOwnerClass,
                 'registration_key' => $resourceRegistration->registrationKey,
                 'label' => $resourceRegistration->label ?? static::resolveOwnerLabel($resourceRegistration),
-                'icon' => static::resolveResourceNodeIcon($resourceRegistration->ownerClass),
+                'icon' => static::resolveResourceNodeIcon($resourceOwnerClass),
                 'section_label' => $resourceRegistration->sectionLabel ?? $resourceRegistration->label ?? static::resolveOwnerLabel($resourceRegistration),
                 'state_path' => static::makePermissionStatePath(
                     'resources',
-                    $resourceRegistration->ownerClass,
+                    $resourceOwnerClass,
                     $resourceRegistration->registrationKey,
                 ),
                 'options' => $options,
@@ -966,6 +968,9 @@ class PermissionResource extends Resource
         return $resourceClass::getNavigationIcon();
     }
 
+    /**
+     * @param  array<int|string, string>  $options
+     */
     protected static function makePermissionCheckboxList(string $statePath, array $options): CheckboxList
     {
         return CheckboxList::make($statePath)
@@ -1012,7 +1017,7 @@ class PermissionResource extends Resource
                 $allSelected = static::collectCheckboxListsRecursive($livewire)
                     ->filter(fn (CheckboxList $c): bool => in_array($c->getName(), $statePaths, true))
                     ->every(fn (CheckboxList $component): bool => count(array_keys($component->getOptions())) === count(
-                        collect($component->getState())->values()->unique()->toArray(),
+                        static::resolveSelectedCheckboxValues($component),
                     ));
 
                 return $allSelected
@@ -1026,7 +1031,7 @@ class PermissionResource extends Resource
                     ->filter(fn (CheckboxList $c): bool => in_array($c->getName(), $statePaths, true));
 
                 $allSelected = $components->every(fn (CheckboxList $component): bool => count(array_keys($component->getOptions())) === count(
-                    collect($component->getState())->values()->unique()->toArray(),
+                    static::resolveSelectedCheckboxValues($component),
                 ));
 
                 $components->each(function (CheckboxList $component) use ($allSelected): void {
@@ -1048,6 +1053,7 @@ class PermissionResource extends Resource
         /** @phpstan-ignore-next-line */
         $allComponents = $livewire->form->getFlatComponents(withHidden: true);
 
+        /** @var array<int, mixed> $allComponents */
         return collect($allComponents)
             ->filter(fn (mixed $component): bool => $component instanceof CheckboxList)
             ->values();
@@ -1083,17 +1089,16 @@ class PermissionResource extends Resource
      */
     protected static function toggleSelectAllViaEntities(LivewireComponent $livewire, Set $set): void
     {
-        $entitiesStates = static::collectCheckboxListsRecursive($livewire)
-            ->reduce(function (Collection $counts, CheckboxList $component): Collection {
-                $counts[$component->getName()] = count(array_keys($component->getOptions())) === count(
-                    collect($component->getState())->values()->unique()->toArray(),
-                );
+        /** @var list<bool> $entitiesStates */
+        $entitiesStates = [];
 
-                return $counts;
-            }, collect())
-            ->values();
+        foreach (static::collectCheckboxListsRecursive($livewire) as $component) {
+            $entitiesStates[] = count(array_keys($component->getOptions())) === count(
+                static::resolveSelectedCheckboxValues($component),
+            );
+        }
 
-        if ($entitiesStates->containsStrict(false)) {
+        if (in_array(false, $entitiesStates, true)) {
             $set('select_all', false);
         } else {
             $set('select_all', true);
@@ -1112,6 +1117,26 @@ class PermissionResource extends Resource
             });
     }
 
+    /**
+     * @return array<int, int|string>
+     */
+    protected static function resolveSelectedCheckboxValues(CheckboxList $component): array
+    {
+        $state = $component->getState();
+
+        if (! is_array($state)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(
+            $state,
+            static fn (mixed $value): bool => is_int($value) || is_string($value),
+        )));
+    }
+
+    /**
+     * @return array<int|string, string>
+     */
     protected static function getOwnerPermissionOptions(
         PermissionOwnerRegistration $ownerRegistration,
     ): array {
@@ -1155,6 +1180,9 @@ class PermissionResource extends Resource
         return $options;
     }
 
+    /**
+     * @return array<int, string>
+     */
     protected static function resolveOwnerAbilities(PermissionOwnerRegistration $ownerRegistration): array
     {
         if (method_exists($ownerRegistration->ownerClass, 'getPermissionActions')) {
@@ -1275,6 +1303,9 @@ class PermissionResource extends Resource
         return $options;
     }
 
+    /**
+     * @return array<int|string, string>
+     */
     protected static function getSingularOwnerPermissionOption(
         PermissionOwnerRegistration $ownerRegistration,
         string $label,
@@ -1290,7 +1321,8 @@ class PermissionResource extends Resource
             static::resolveOwnerSubject($ownerRegistration),
         );
         $permissionModel = app(StoresPermissions::class)->getPermissionModel();
-        $query = $permissionModel::query()->where('name', $permissionKey);
+        $query = $permissionModel::query()
+            ->where('name', $permissionKey); // @phpstan-ignore argument.type
 
         if (static::shouldScopePermissionsToCurrentPanel()) {
             $query->where(static::getPanelColumnName(), static::resolveCurrentPanelScopeValue());
@@ -1437,6 +1469,7 @@ class PermissionResource extends Resource
     protected static function parsePermissionName(string $permissionName): array
     {
         $separator = (string) config('filament-acl.permissions.separator', ':');
+        $separator = $separator !== '' ? $separator : ':';
 
         if (! str_contains($permissionName, $separator)) {
             return [$permissionName, __('filament-acl::filament-acl.resources.permissions.groups.ungrouped')];

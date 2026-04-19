@@ -128,7 +128,7 @@ final class PermissionGate
     protected function normalizeAbility(string | UnitEnum $ability): string
     {
         return match (true) {
-            $ability instanceof BackedEnum => $ability->value,
+            $ability instanceof BackedEnum => (string) $ability->value,
             $ability instanceof UnitEnum => $ability->name,
             default => $ability,
         };

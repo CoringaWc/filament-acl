@@ -12,6 +12,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
+/**
+ * @property string $email
+ * @property string $name
+ * @property string $password
+ */
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory;

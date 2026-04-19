@@ -33,6 +33,10 @@ class PermissionActionResolver
             return $permissionAction;
         }
 
+        if (! class_exists($permissionAction)) {
+            return $permissionAction;
+        }
+
         if (! Utils::shouldRegisterPermissionOwner($permissionAction)) {
             return null;
         }
@@ -64,6 +68,9 @@ class PermissionActionResolver
         );
     }
 
+    /**
+     * @param  class-string  $ownerClass
+     */
     protected function resolveOwnerType(string $ownerClass): ?PermissionEntityType
     {
         return Utils::inferPermissionEntityType($ownerClass);
