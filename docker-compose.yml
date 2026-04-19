@@ -39,10 +39,10 @@ services:
       XDG_CACHE_HOME: /var/www/html/.docker/cache
       PLAYWRIGHT_BROWSERS_PATH: /var/www/html/.docker/cache/ms-playwright
       DB_DATABASE: /var/www/html/vendor/orchestra/testbench-core/laravel/database/database.sqlite
-      WORKBENCH_PORT: ${WORKBENCH_PORT:-8001}
+      WORKBENCH_PORT: ${WORKBENCH_PORT:-8002}
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
     ports:
-      - "${WORKBENCH_PORT:-8001}:${WORKBENCH_PORT:-8001}"
+      - "${WORKBENCH_PORT:-8002}:${WORKBENCH_PORT:-8002}"
     volumes:
       - .:/var/www/html
     command:
@@ -52,4 +52,4 @@ services:
         mkdir -p .docker/composer/cache .docker/npm-cache .docker/cache/ms-playwright &&
         touch vendor/orchestra/testbench-core/laravel/database/database.sqlite &&
         composer run bootstrap:workbench &&
-        exec php vendor/bin/testbench serve --host=0.0.0.0 --port=${WORKBENCH_PORT:-8001} --ansi
+        exec php vendor/bin/testbench serve --host=0.0.0.0 --port=${WORKBENCH_PORT:-8002} --ansi
