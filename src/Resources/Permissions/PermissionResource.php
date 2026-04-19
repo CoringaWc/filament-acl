@@ -200,8 +200,12 @@ class PermissionResource extends Resource
 
         return <<<JS
         if (window.__aclMasterToggleGuard) {
-            window.__aclMasterToggleGuard = false;
+            // Skip cascade: this was triggered programmatically by a CheckboxList or
+            // section action — not by the user clicking the master toggle.
+            // The guard will be cleared by its own setTimeout.
         } else {
+            window.__aclMasterToggleGuard = true;
+            setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200);
             {$setStatements};
             {$bulkSync}
         }
@@ -999,7 +1003,7 @@ class PermissionResource extends Resource
             ->bulkToggleable()
             ->columns(2)
             ->columnSpanFull()
-            ->afterStateUpdatedJs(static fn (): string => static::buildCheckboxListMasterSyncJs());
+            ->afterStateUpdatedJs(static::buildCheckboxListMasterSyncJs());
     }
 
     /**
