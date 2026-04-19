@@ -196,16 +196,17 @@ class PermissionResource extends Resource
         }
 
         $setStatements = implode(";\n", $statements);
-        $bulkSync = static::buildJsBulkToggleSync();
+        $guardCondition = static::buildJsMasterToggleGuardCondition();
+        $guardEnter = static::buildJsMasterToggleGuardEnter();
+        $guardLeave = static::buildJsMasterToggleGuardLeave();
+        $bulkSync = static::buildJsBulkToggleSync(afterSync: $guardLeave);
 
         return <<<JS
-        if (window.__aclMasterToggleGuard) {
+        if ({$guardCondition}) {
             // Skip cascade: this was triggered programmatically by a CheckboxList or
             // section action — not by the user clicking the master toggle.
-            // The guard will be cleared by its own setTimeout.
         } else {
-            window.__aclMasterToggleGuard = true;
-            setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200);
+            {$guardEnter};
             {$setStatements};
             {$bulkSync}
         }
@@ -1045,9 +1046,21 @@ class PermissionResource extends Resource
         $selectAllJs = static::buildJsSetState($statePathsWithOptions, selectAll: true);
         $deselectAllJs = static::buildJsSetState($statePathsWithOptions, selectAll: false);
         $masterSyncJs = static::buildJsMasterToggleSync();
-        $bulkToggleSync = static::buildJsBulkToggleSync();
-        $guard = 'window.__aclMasterToggleGuard = true';
-        $guardTimeout = 'setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)';
+        $guardEnter = static::buildJsMasterToggleGuardEnter();
+        $guardLeave = static::buildJsMasterToggleGuardLeave();
+        $bulkToggleSync = static::buildJsBulkToggleSync(afterSync: $guardLeave);
+        $selectAllActionJs = <<<JS
+        {$guardEnter};
+        {$selectAllJs};
+        {$masterSyncJs};
+        {$bulkToggleSync}
+        JS;
+        $deselectAllActionJs = <<<JS
+        {$guardEnter};
+        {$deselectAllJs};
+        \$set('select_all', false);
+        {$bulkToggleSync}
+        JS;
 
         return [
             Actions::make([
@@ -1055,7 +1068,7 @@ class PermissionResource extends Resource
                     ->label(__('filament-acl::filament-acl.resources.permissions.section_toggle.select_all'))
                     ->color('primary')
                     ->link()
-                    ->actionJs("{$guard};\n{$selectAllJs};\n{$masterSyncJs};\n{$guardTimeout};\n{$bulkToggleSync}"),
+                    ->actionJs($selectAllActionJs),
             ])->visibleJs("!({$allSelectedCondition})"),
 
             Actions::make([
@@ -1063,7 +1076,7 @@ class PermissionResource extends Resource
                     ->label(__('filament-acl::filament-acl.resources.permissions.section_toggle.deselect_all'))
                     ->color('primary')
                     ->link()
-                    ->actionJs("{$guard};\n{$deselectAllJs};\n\$set('select_all', false);\n{$guardTimeout};\n{$bulkToggleSync}"),
+                    ->actionJs($deselectAllActionJs),
             ])->visibleJs($allSelectedCondition),
         ];
     }
@@ -1116,16 +1129,19 @@ class PermissionResource extends Resource
      * We use setTimeout(0) to defer until after Livewire has flushed the
      * DOM changes, then call checkIfAllCheckboxesAreChecked() via Alpine.$data().
      */
-    protected static function buildJsBulkToggleSync(): string
+    protected static function buildJsBulkToggleSync(?string $afterSync = null): string
     {
-        return <<<'JS'
+        $afterSync ??= '';
+
+        return <<<JS
         setTimeout(() => {
             document.querySelectorAll('.fi-fo-checkbox-list').forEach(el => {
-                const data = Alpine.$data(el);
+                const data = Alpine.\$data(el);
                 if (data?.checkIfAllCheckboxesAreChecked) {
                     data.checkIfAllCheckboxesAreChecked();
                 }
             });
+            {$afterSync}
         }, 0)
         JS;
     }
@@ -1138,7 +1154,9 @@ class PermissionResource extends Resource
         $allFieldDefs = static::getPermissionFieldDefinitions();
         $condition = static::buildJsAllSelectedCondition($allFieldDefs);
 
-        return "\$set('select_all', {$condition})";
+        return <<<JS
+        \$set('select_all', {$condition})
+        JS;
     }
 
     /**
@@ -1149,11 +1167,40 @@ class PermissionResource extends Resource
      */
     protected static function buildCheckboxListMasterSyncJs(): string
     {
-        $guard = 'window.__aclMasterToggleGuard = true';
-        $guardTimeout = 'setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)';
+        $guardEnter = static::buildJsMasterToggleGuardEnter();
+        $guardLeave = static::buildJsMasterToggleGuardLeave();
         $masterSync = static::buildJsMasterToggleSync();
 
-        return "{$guard};\n{$masterSync};\n{$guardTimeout}";
+        return <<<JS
+        {$guardEnter};
+        {$masterSync};
+        {$guardLeave}
+        JS;
+    }
+
+    protected static function buildJsMasterToggleGuardCondition(): string
+    {
+        return <<<'JS'
+        (window.__aclMasterToggleGuardDepth ?? 0) > 0
+        JS;
+    }
+
+    protected static function buildJsMasterToggleGuardEnter(): string
+    {
+        return <<<'JS'
+        window.__aclMasterToggleGuardDepth = (window.__aclMasterToggleGuardDepth ?? 0) + 1
+        JS;
+    }
+
+    protected static function buildJsMasterToggleGuardLeave(): string
+    {
+        return <<<'JS'
+        queueMicrotask(() => {
+            requestAnimationFrame(() => {
+                window.__aclMasterToggleGuardDepth = Math.max((window.__aclMasterToggleGuardDepth ?? 1) - 1, 0)
+            })
+        })
+        JS;
     }
 
     /**

@@ -6,10 +6,10 @@ use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
 use CoringaWc\FilamentAcl\Resources\Permissions\PermissionResource;
 use CoringaWc\FilamentAcl\Support\Utils;
 use CoringaWc\FilamentAcl\Tests\TestCase;
-use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Workbench\App\Filament\Pages\ContentInsightsPage;
 use Workbench\App\Filament\Pages\Dashboard;
@@ -241,11 +241,30 @@ test('it marks the master toggle as selected when all visible permissions are as
 
     $state = PermissionResource::fillPermissionGroupState(
         $moderatorRole->permissions()
-            ->pluck('permissions.id')
+            ->allRelatedIds()
             ->all(),
     );
 
     expect($state['select_all'])->toBeTrue();
+});
+test('it keeps the master toggle unselected when only part of the visible permissions are assigned', function () {
+    /** @var TestCase $this */
+    Artisan::call('db:seed', [
+        '--class' => DatabaseSeeder::class,
+        '--no-interaction' => true,
+    ]);
+
+    $postsOnlyRole = Role::query()
+        ->where('name', 'posts_only')
+        ->firstOrFail();
+
+    $state = PermissionResource::fillPermissionGroupState(
+        $postsOnlyRole->permissions()
+            ->allRelatedIds()
+            ->all(),
+    );
+
+    expect($state['select_all'])->toBeFalse();
 });
 test('it hides the protected role from the user edit form', function () {
     /** @var TestCase $this */
@@ -279,10 +298,12 @@ test('custom action publish is visible only for draft posts', function () {
     $this->grantOwnerPermission($actor, 'publish', PostResource::class, PermissionEntityType::Resource);
     $this->actingAs($actor);
 
-    Livewire::test(ListPosts::class)
-        ->assertOk()
-        ->assertActionVisible(TestAction::make('publish')->table($draftPost))
-        ->assertActionHidden(TestAction::make('publish')->table($lockedPost));
+    /** @var Testable<ListPosts> $postsPage */
+    $postsPage = Livewire::test(ListPosts::class);
+
+    $postsPage->assertOk();
+    $postsPage->assertTableActionVisible('publish', $draftPost);
+    $postsPage->assertTableActionHidden('publish', $lockedPost);
 });
 test('custom action publish is authorized only with permission', function () {
     /** @var TestCase $this */
@@ -311,10 +332,12 @@ test('custom action archive is visible only for categories with description', fu
     $this->grantOwnerPermission($actor, 'archive', CategoryResource::class, PermissionEntityType::Resource);
     $this->actingAs($actor);
 
-    Livewire::test(ListCategories::class)
-        ->assertOk()
-        ->assertActionVisible(TestAction::make('archive')->table($categoryWithDesc))
-        ->assertActionHidden(TestAction::make('archive')->table($categoryNoDesc));
+    /** @var Testable<ListCategories> $categoriesPage */
+    $categoriesPage = Livewire::test(ListCategories::class);
+
+    $categoriesPage->assertOk();
+    $categoriesPage->assertTableActionVisible('archive', $categoryWithDesc);
+    $categoriesPage->assertTableActionHidden('archive', $categoryNoDesc);
 });
 test('custom action archive is authorized only with permission', function () {
     /** @var TestCase $this */
