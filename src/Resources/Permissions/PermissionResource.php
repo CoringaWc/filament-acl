@@ -37,17 +37,14 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Contracts\HasIcon;
-use Filament\Support\Enums\Alignment;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
-use Livewire\Component as LivewireComponent;
 use UnitEnum;
 
 class PermissionResource extends Resource
@@ -564,8 +561,7 @@ class PermissionResource extends Resource
                 ->collapsed(static::getPluginOption('usesSectionsCollapsed', false))
                 ->persistCollapsed(static::getPluginOption('usesSectionsPersistCollapsed', true))
                 ->afterHeader(
-                    fn (): array =>
-                    static::buildGroupToggleActions('section_' . $sectionId, $statePathsWithOptions),
+                    fn (): array => static::buildGroupToggleActions('section_' . $sectionId, $statePathsWithOptions),
                 );
 
             if ($sectionIcon !== null) {
@@ -1047,7 +1043,7 @@ class PermissionResource extends Resource
         $masterSyncJs = static::buildJsMasterToggleSync();
         $bulkToggleSync = static::buildJsBulkToggleSync();
         $guard = 'window.__aclMasterToggleGuard = true';
-        $guardTimeout = "setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)";
+        $guardTimeout = 'setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)';
 
         return [
             Actions::make([
@@ -1150,7 +1146,7 @@ class PermissionResource extends Resource
     protected static function buildCheckboxListMasterSyncJs(): string
     {
         $guard = 'window.__aclMasterToggleGuard = true';
-        $guardTimeout = "setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)";
+        $guardTimeout = 'setTimeout(() => { window.__aclMasterToggleGuard = false; }, 200)';
         $masterSync = static::buildJsMasterToggleSync();
 
         return "{$guard};\n{$masterSync};\n{$guardTimeout}";
@@ -1191,8 +1187,6 @@ class PermissionResource extends Resource
 
         return $map;
     }
-
-
 
     /**
      * @return array<int|string, string>
