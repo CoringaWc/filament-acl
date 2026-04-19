@@ -1473,6 +1473,20 @@ class PermissionResource extends Resource
             );
         }
 
+        $normalizedAssignedPermissionIds = array_values(array_unique(array_map(
+            static fn (int | string $permissionId): string => (string) $permissionId,
+            $assignedPermissionIds,
+        )));
+        $allPermissionIds = collect(static::getPermissionFieldDefinitions())
+            ->flatten()
+            ->map(static fn (int | string $permissionId): string => (string) $permissionId)
+            ->unique()
+            ->values()
+            ->all();
+
+        $state['select_all'] = $allPermissionIds !== []
+            && array_diff($allPermissionIds, $normalizedAssignedPermissionIds) === [];
+
         return $state;
     }
 

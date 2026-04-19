@@ -228,6 +228,25 @@ test('it can render the plugin permissions edit page without checkbox errors', f
         ->assertSee('Resumo de Posts')
         ->assertDontSee(Utils::getProtectedRoleName());
 });
+test('it marks the master toggle as selected when all visible permissions are assigned', function () {
+    /** @var TestCase $this */
+    Artisan::call('db:seed', [
+        '--class' => DatabaseSeeder::class,
+        '--no-interaction' => true,
+    ]);
+
+    $moderatorRole = Role::query()
+        ->where('name', 'moderator')
+        ->firstOrFail();
+
+    $state = PermissionResource::fillPermissionGroupState(
+        $moderatorRole->permissions()
+            ->pluck('permissions.id')
+            ->all(),
+    );
+
+    expect($state['select_all'])->toBeTrue();
+});
 test('it hides the protected role from the user edit form', function () {
     /** @var TestCase $this */
     Artisan::call('db:seed', [
