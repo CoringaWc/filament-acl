@@ -1032,7 +1032,7 @@ The workbench config files in `workbench/config/` are loaded automatically throu
 Run the package test suite:
 
 ```bash
-docker compose exec php vendor/bin/phpunit --testdox
+docker compose exec php vendor/bin/pest --ci
 docker compose exec php vendor/bin/phpstan analyse --memory-limit=1G
 docker compose exec php vendor/bin/pint --dirty
 ```

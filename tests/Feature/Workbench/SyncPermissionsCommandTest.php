@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Feature\Workbench;
-
 use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerRegistration;
@@ -19,65 +17,63 @@ use Workbench\App\Filament\Resources\Posts\PostResource;
 use Workbench\App\Filament\Resources\Users\RelationManagers\PostsRelationManager;
 use Workbench\App\Filament\Widgets\PostsOverviewWidget;
 
-class SyncPermissionsCommandTest extends TestCase
-{
-    public function test_it_syncs_permissions_for_the_admin_panel(): void
-    {
-        Permission::query()->delete();
+use function Pest\Laravel\assertDatabaseHas;
 
-        Artisan::call('filament-acl:sync', [
-            '--panel' => ['admin'],
-        ]);
+test('it syncs permissions for the admin panel', function () {
+    /** @var TestCase $this */
+    Permission::query()->delete();
 
-        self::assertDatabaseHas('permissions', [
-            'name' => $this->permissionKeyForOwner('viewAny', PostResource::class, PermissionEntityType::Resource),
-        ]);
-        self::assertDatabaseHas('permissions', [
-            'name' => $this->permissionKeyForOwner('viewAny', CategoryResource::class, PermissionEntityType::Resource),
-        ]);
-        self::assertDatabaseHas('permissions', [
-            'name' => $this->permissionKeyForOwner('viewAny', PostsRelationManager::class, PermissionEntityType::RelationManager),
-        ]);
-        self::assertDatabaseHas('permissions', [
-            'name' => $this->permissionKeyForOwner('view', ContentInsightsPage::class, PermissionEntityType::Page),
-        ]);
-        self::assertDatabaseHas('permissions', [
-            'name' => $this->permissionKeyForOwner('view', PostsOverviewWidget::class, PermissionEntityType::Widget),
-        ]);
-        self::assertDatabaseHas('permissions', [
-            'name' => 'content.export',
-        ]);
-    }
+    Artisan::call('filament-acl:sync', [
+        '--panel' => ['admin'],
+    ]);
 
-    public function test_excluded_relation_managers_are_not_discovered(): void
-    {
-        config([
-            'filament-acl.relation_managers.exclude' => [
-                CategoriesPostsRelationManager::class,
-            ],
-        ]);
-
-        $discovery = app(PermissionOwnerDiscovery::class);
-        $panel = Filament::getCurrentPanel();
-        assert($panel instanceof Panel);
-
-        $resourceRegistrations = $discovery->discoverResources($panel);
-
-        $categoryRegistration = collect($resourceRegistrations)
-            ->first(fn (PermissionOwnerRegistration $r): bool => $r->ownerClass === CategoryResource::class);
-
-        self::assertNotNull($categoryRegistration, 'CategoryResource should be discovered');
-
-        $rmRegistrations = $discovery->discoverRelationManagers($panel, $categoryRegistration);
-
-        $excludedClasses = collect($rmRegistrations)
-            ->pluck('ownerClass')
-            ->all();
-
-        self::assertNotContains(
+    assertDatabaseHas('permissions', [
+        'name' => $this->permissionKeyForOwner('viewAny', PostResource::class, PermissionEntityType::Resource),
+    ]);
+    assertDatabaseHas('permissions', [
+        'name' => $this->permissionKeyForOwner('viewAny', CategoryResource::class, PermissionEntityType::Resource),
+    ]);
+    assertDatabaseHas('permissions', [
+        'name' => $this->permissionKeyForOwner('viewAny', PostsRelationManager::class, PermissionEntityType::RelationManager),
+    ]);
+    assertDatabaseHas('permissions', [
+        'name' => $this->permissionKeyForOwner('view', ContentInsightsPage::class, PermissionEntityType::Page),
+    ]);
+    assertDatabaseHas('permissions', [
+        'name' => $this->permissionKeyForOwner('view', PostsOverviewWidget::class, PermissionEntityType::Widget),
+    ]);
+    assertDatabaseHas('permissions', [
+        'name' => 'content.export',
+    ]);
+});
+test('excluded relation managers are not discovered', function () {
+    /** @var TestCase $this */
+    config([
+        'filament-acl.relation_managers.exclude' => [
             CategoriesPostsRelationManager::class,
-            $excludedClasses,
-            'Excluded relation manager should not be discovered',
-        );
-    }
-}
+        ],
+    ]);
+
+    $discovery = app(PermissionOwnerDiscovery::class);
+    $panel = Filament::getCurrentPanel();
+    assert($panel instanceof Panel);
+
+    $resourceRegistrations = $discovery->discoverResources($panel);
+
+    $categoryRegistration = collect($resourceRegistrations)
+        ->first(fn (PermissionOwnerRegistration $r): bool => $r->ownerClass === CategoryResource::class);
+
+    $this->assertNotNull($categoryRegistration, 'CategoryResource should be discovered');
+
+    $rmRegistrations = $discovery->discoverRelationManagers($panel, $categoryRegistration);
+
+    $excludedClasses = collect($rmRegistrations)
+        ->pluck('ownerClass')
+        ->all();
+
+    $this->assertNotContains(
+        CategoriesPostsRelationManager::class,
+        $excludedClasses,
+        'Excluded relation manager should not be discovered',
+    );
+});

@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePost;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePostPolicy;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePostResource;
@@ -12,32 +10,26 @@ use CoringaWc\FilamentAcl\Tests\Fixtures\FakeUser;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 use Illuminate\Support\Facades\Gate;
 
-class HasResourcePermissionsTest extends TestCase
-{
-    public function test_it_uses_contextual_permissions_for_view_any(): void
-    {
-        Gate::policy(FakePost::class, FakePostPolicy::class);
-        $this->be(new FakeUser(['ViewAny:BlogPosts']));
+test('it uses contextual permissions for view any', function () {
+    /** @var TestCase $this */
+    Gate::policy(FakePost::class, FakePostPolicy::class);
+    $this->be(new FakeUser(['ViewAny:BlogPosts']));
 
-        self::assertTrue(FakePostResource::can('viewAny'));
-    }
+    $this->assertTrue(FakePostResource::can('viewAny'));
+});
+test('it uses contextual permissions for record actions', function () {
+    /** @var TestCase $this */
+    Gate::policy(FakePost::class, FakePostPolicy::class);
+    $this->be(new FakeUser(['Update:BlogPosts']));
 
-    public function test_it_uses_contextual_permissions_for_record_actions(): void
-    {
-        Gate::policy(FakePost::class, FakePostPolicy::class);
-        $this->be(new FakeUser(['Update:BlogPosts']));
-
-        self::assertTrue(FakePostResource::can('update', new FakePost));
-    }
-
-    public function test_it_merges_default_and_custom_permission_actions(): void
-    {
-        self::assertContains('viewAny', FakePostResource::getPermissionActions());
-        self::assertContains('publish', FakePostResource::getPermissionActions());
-    }
-
-    public function test_it_uses_permission_actions_attribute_to_replace_the_full_list(): void
-    {
-        self::assertSame(['view'], FakePostResourceWithPermissionActionsAttribute::getPermissionActions());
-    }
-}
+    $this->assertTrue(FakePostResource::can('update', new FakePost));
+});
+test('it merges default and custom permission actions', function () {
+    /** @var TestCase $this */
+    $this->assertContains('viewAny', FakePostResource::getPermissionActions());
+    $this->assertContains('publish', FakePostResource::getPermissionActions());
+});
+test('it uses permission actions attribute to replace the full list', function () {
+    /** @var TestCase $this */
+    $this->assertSame(['view'], FakePostResourceWithPermissionActionsAttribute::getPermissionActions());
+});

@@ -2,66 +2,57 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
-use Closure;
 use CoringaWc\FilamentAcl\FilamentPermissionManager;
 use CoringaWc\FilamentAcl\Support\PermissionAction;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 
-class FilamentPermissionManagerTest extends TestCase
-{
-    public function test_it_builds_default_permission_keys_from_config(): void
-    {
-        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
+test('it builds default permission keys from config', function () {
+    /** @var TestCase $this */
+    $manager = $this->appContainer()->make(FilamentPermissionManager::class);
 
-        self::assertSame('ViewAny:TenantUsers', $manager->defaultPermissionKeyBuilder('viewAny', 'TenantUsers'));
-    }
+    $this->assertSame('ViewAny:TenantUsers', $manager->defaultPermissionKeyBuilder('viewAny', 'TenantUsers'));
+});
+test('it stores custom callbacks', function () {
+    /** @var TestCase $this */
+    $manager = $this->appContainer()->make(FilamentPermissionManager::class);
+    $subjectResolver = static fn (): ?string => null;
+    $permissionKeyBuilder = static fn (): ?string => null;
 
-    public function test_it_stores_custom_callbacks(): void
-    {
-        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
-        $subjectResolver = static fn (): ?string => null;
-        $permissionKeyBuilder = static fn (): ?string => null;
+    $manager
+        ->resolvePermissionSubjectUsing($subjectResolver)
+        ->buildPermissionKeyUsing($permissionKeyBuilder);
 
-        $manager
-            ->resolvePermissionSubjectUsing($subjectResolver)
-            ->buildPermissionKeyUsing($permissionKeyBuilder);
+    $this->assertInstanceOf(Closure::class, $manager->getPermissionSubjectResolver());
+    $this->assertInstanceOf(Closure::class, $manager->getPermissionKeyBuilder());
+});
+test('it registers panel configuration', function () {
+    /** @var TestCase $this */
+    $manager = $this->appContainer()->make(FilamentPermissionManager::class);
 
-        self::assertInstanceOf(Closure::class, $manager->getPermissionSubjectResolver());
-        self::assertInstanceOf(Closure::class, $manager->getPermissionKeyBuilder());
-    }
+    $manager->registerPanel(
+        panelId: 'admin',
+        strictMode: true,
+        scopeRolesByPanel: true,
+        scopePermissionsByPanel: false,
+    );
 
-    public function test_it_registers_panel_configuration(): void
-    {
-        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
+    $this->assertTrue($manager->usesStrictMode('admin'));
+    $this->assertTrue($manager->scopesRolesByPanel('admin'));
+    $this->assertFalse($manager->scopesPermissionsByPanel('admin'));
+    $this->assertSame([
+        'strict_mode' => true,
+        'scope_roles_by_panel' => true,
+        'scope_permissions_by_panel' => false,
+    ], $manager->getPanelConfiguration('admin'));
+});
+test('it builds permission keys from permission actions', function () {
+    /** @var TestCase $this */
+    $manager = $this->appContainer()->make(FilamentPermissionManager::class);
+    $permissionAction = PermissionAction::forResource(
+        resourceClass: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
+        subject: 'Users',
+        permissionAction: 'viewAny',
+    );
 
-        $manager->registerPanel(
-            panelId: 'admin',
-            strictMode: true,
-            scopeRolesByPanel: true,
-            scopePermissionsByPanel: false,
-        );
-
-        self::assertTrue($manager->usesStrictMode('admin'));
-        self::assertTrue($manager->scopesRolesByPanel('admin'));
-        self::assertFalse($manager->scopesPermissionsByPanel('admin'));
-        self::assertSame([
-            'strict_mode' => true,
-            'scope_roles_by_panel' => true,
-            'scope_permissions_by_panel' => false,
-        ], $manager->getPanelConfiguration('admin'));
-    }
-
-    public function test_it_builds_permission_keys_from_permission_actions(): void
-    {
-        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
-        $permissionAction = PermissionAction::forResource(
-            resourceClass: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
-            subject: 'Users',
-            permissionAction: 'viewAny',
-        );
-
-        self::assertSame('ViewAny:Users', $manager->buildPermissionKey('viewAny', $permissionAction));
-    }
-}
+    $this->assertSame('ViewAny:Users', $manager->buildPermissionKey('viewAny', $permissionAction));
+});

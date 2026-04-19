@@ -474,15 +474,15 @@ If you change runtime behavior, add or update workbench coverage rather than rel
 
 Before finalizing changes:
 
-1. Run focused PHPUnit coverage for the affected area.
-2. Run the full PHPUnit suite.
+1. Run focused Pest coverage for the affected area.
+2. Run the full Pest suite.
 3. Run PHPStan.
 4. Run Pint.
 
 Preferred commands in this repository:
 
 ```bash
-docker compose exec php vendor/bin/phpunit --testdox
+docker compose exec php vendor/bin/pest --ci
 docker compose exec php vendor/bin/phpstan analyse --memory-limit=1G
 docker compose exec php vendor/bin/pint --dirty
 ```

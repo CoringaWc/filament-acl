@@ -2,45 +2,39 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
 use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
 use CoringaWc\FilamentAcl\Support\PermissionAction;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 
-class PermissionActionTest extends TestCase
-{
-    public function test_it_builds_resource_actions(): void
-    {
-        $permissionAction = PermissionAction::forResource(
-            resourceClass: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
-            subject: 'Users',
-            permissionAction: 'viewAny',
-            panelId: 'admin',
-            registrationKey: 'default',
-        );
+test('it builds resource actions', function () {
+    /** @var TestCase $this */
+    $permissionAction = PermissionAction::forResource(
+        resourceClass: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
+        subject: 'Users',
+        permissionAction: 'viewAny',
+        panelId: 'admin',
+        registrationKey: 'default',
+    );
 
-        self::assertSame(PermissionEntityType::Resource, $permissionAction->ownerType);
-        self::assertSame('Users', $permissionAction->subject);
-        self::assertSame('viewAny', $permissionAction->permissionAction);
-        self::assertSame('admin', $permissionAction->panelId);
-        self::assertSame('default', $permissionAction->registrationKey);
-    }
+    $this->assertSame(PermissionEntityType::Resource, $permissionAction->ownerType);
+    $this->assertSame('Users', $permissionAction->subject);
+    $this->assertSame('viewAny', $permissionAction->permissionAction);
+    $this->assertSame('admin', $permissionAction->panelId);
+    $this->assertSame('default', $permissionAction->registrationKey);
+});
+test('it builds relation manager actions', function () {
+    /** @var TestCase $this */
+    $permissionAction = PermissionAction::forRelationManager(
+        relationManagerClass: 'App\\Filament\\Admin\\RelationManagers\\TenantUsersRelationManager',
+        subject: 'TenantUsers',
+        permissionAction: 'transfer',
+        panelId: 'admin',
+        relatedResource: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
+        registrationKey: 'default',
+    );
 
-    public function test_it_builds_relation_manager_actions(): void
-    {
-        $permissionAction = PermissionAction::forRelationManager(
-            relationManagerClass: 'App\\Filament\\Admin\\RelationManagers\\TenantUsersRelationManager',
-            subject: 'TenantUsers',
-            permissionAction: 'transfer',
-            panelId: 'admin',
-            relatedResource: 'App\\Filament\\Admin\\Resources\\Users\\UserResource',
-            registrationKey: 'default',
-        );
-
-        self::assertSame(PermissionEntityType::RelationManager, $permissionAction->ownerType);
-        self::assertSame('TenantUsers', $permissionAction->subject);
-        self::assertSame('transfer', $permissionAction->permissionAction);
-        self::assertSame('App\\Filament\\Admin\\Resources\\Users\\UserResource', $permissionAction->relatedResource);
-    }
-}
+    $this->assertSame(PermissionEntityType::RelationManager, $permissionAction->ownerType);
+    $this->assertSame('TenantUsers', $permissionAction->subject);
+    $this->assertSame('transfer', $permissionAction->permissionAction);
+    $this->assertSame('App\\Filament\\Admin\\Resources\\Users\\UserResource', $permissionAction->relatedResource);
+});

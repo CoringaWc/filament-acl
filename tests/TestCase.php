@@ -30,6 +30,9 @@ use Livewire\Mechanisms\DataStore;
 use Orchestra\Testbench\Concerns\WithLaravelMigrations;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as Orchestra;
+use PHPUnit\Framework\Constraint\Callback;
+use PHPUnit\Framework\MockObject\MockBuilder;
+use PHPUnit\Framework\MockObject\Rule\InvokedCount;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
 use Spatie\Permission\Contracts\Permission as PermissionContract;
 use Spatie\Permission\Models\Permission;
@@ -142,7 +145,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('permission.cache.key', 'spatie.permission.cache');
     }
 
-    protected function permissionKeyForOwner(
+    public function permissionKeyForOwner(
         string $ability,
         string $ownerClass,
         PermissionEntityType $entityType,
@@ -163,19 +166,19 @@ abstract class TestCase extends Orchestra
     /**
      * @param  array<string, mixed>  $attributes
      */
-    protected function createUser(array $attributes = []): User
+    public function createUser(array $attributes = []): User
     {
         return User::factory()->create($attributes);
     }
 
-    protected function appContainer(): Application
+    public function appContainer(): Application
     {
         assert($this->app instanceof Application);
 
         return $this->app;
     }
 
-    protected function grantOwnerPermission(
+    public function grantOwnerPermission(
         User $user,
         string $ability,
         string $ownerClass,
@@ -191,5 +194,32 @@ abstract class TestCase extends Orchestra
         $user->givePermissionTo($permission);
 
         return $permission;
+    }
+
+    /**
+     * @template TMocked of object
+     *
+     * @param  class-string<TMocked>  $className
+     * @return MockBuilder<TMocked>
+     */
+    public function mockBuilder(string $className): MockBuilder
+    {
+        return $this->getMockBuilder($className);
+    }
+
+    public function onceExpectation(): InvokedCount
+    {
+        return $this->once();
+    }
+
+    /**
+     * @template TCallbackInput
+     *
+     * @param  callable(TCallbackInput): bool  $callback
+     * @return Callback<TCallbackInput>
+     */
+    public function callbackConstraint(callable $callback): Callback
+    {
+        return $this->callback($callback);
     }
 }

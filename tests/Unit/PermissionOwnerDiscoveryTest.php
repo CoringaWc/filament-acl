@@ -2,36 +2,30 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
 use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Contracts\Support\Htmlable;
-use ReflectionMethod;
 
-class PermissionOwnerDiscoveryTest extends TestCase
-{
-    public function test_resolve_widget_label_uses_widget_heading_from_instance(): void
-    {
-        $discovery = app(PermissionOwnerDiscovery::class);
-        $method = new ReflectionMethod(PermissionOwnerDiscovery::class, 'resolveWidgetLabel');
+test('resolve widget label uses widget heading from instance', function (): void {
+    /** @var TestCase $this */
+    $discovery = app(PermissionOwnerDiscovery::class);
+    $method = new ReflectionMethod(PermissionOwnerDiscovery::class, 'resolveWidgetLabel');
 
-        $label = $method->invoke($discovery, FakeHeadingWidget::class);
+    $label = $method->invoke($discovery, FakeHeadingWidget::class);
 
-        self::assertSame('Fake Heading Widget', $label);
-    }
+    expect($label)->toBe('Fake Heading Widget');
+});
 
-    public function test_resolve_widget_label_strips_htmlable_headings(): void
-    {
-        $discovery = app(PermissionOwnerDiscovery::class);
-        $method = new ReflectionMethod(PermissionOwnerDiscovery::class, 'resolveWidgetLabel');
+test('resolve widget label strips htmlable headings', function (): void {
+    /** @var TestCase $this */
+    $discovery = app(PermissionOwnerDiscovery::class);
+    $method = new ReflectionMethod(PermissionOwnerDiscovery::class, 'resolveWidgetLabel');
 
-        $label = $method->invoke($discovery, FakeHtmlableHeadingWidget::class);
+    $label = $method->invoke($discovery, FakeHtmlableHeadingWidget::class);
 
-        self::assertSame('HTML Heading Widget', $label);
-    }
-}
+    expect($label)->toBe('HTML Heading Widget');
+});
 
 class FakeHeadingWidget extends ChartWidget
 {
@@ -62,5 +56,6 @@ class FakeHtmlableHeadingWidget extends ChartWidget
     protected function getType(): string
     {
         return 'bar';
+
     }
 }

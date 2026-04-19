@@ -2,38 +2,32 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
 use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 
-class DefaultPermissionActionRegistryTest extends TestCase
-{
-    public function test_it_returns_default_resource_actions_from_configuration(): void
-    {
-        $registry = $this->appContainer()->make(DefaultPermissionActionRegistry::class);
+test('it returns default resource actions from configuration', function () {
+    /** @var TestCase $this */
+    $registry = $this->appContainer()->make(DefaultPermissionActionRegistry::class);
 
-        self::assertSame([
-            'viewAny',
-            'view',
-            'create',
-            'update',
-            'delete',
-        ], $registry->forResource());
-    }
+    $this->assertSame([
+        'viewAny',
+        'view',
+        'create',
+        'update',
+        'delete',
+    ], $registry->forResource());
+});
+test('it adds relation manager specific actions', function () {
+    /** @var TestCase $this */
+    config(['filament-acl.relation_managers.actions' => [
+        'viewAny', 'view', 'create', 'update', 'delete',
+        'associate', 'attach', 'detach', 'detachAny',
+        'dissociate', 'dissociateAny',
+    ]]);
 
-    public function test_it_adds_relation_manager_specific_actions(): void
-    {
-        config(['filament-acl.relation_managers.actions' => [
-            'viewAny', 'view', 'create', 'update', 'delete',
-            'associate', 'attach', 'detach', 'detachAny',
-            'dissociate', 'dissociateAny',
-        ]]);
+    $registry = $this->appContainer()->make(DefaultPermissionActionRegistry::class);
 
-        $registry = $this->appContainer()->make(DefaultPermissionActionRegistry::class);
-
-        self::assertContains('attach', $registry->forRelationManager());
-        self::assertContains('dissociateAny', $registry->forRelationManager());
-        self::assertContains('viewAny', $registry->forRelationManager());
-    }
-}
+    $this->assertContains('attach', $registry->forRelationManager());
+    $this->assertContains('dissociateAny', $registry->forRelationManager());
+    $this->assertContains('viewAny', $registry->forRelationManager());
+});

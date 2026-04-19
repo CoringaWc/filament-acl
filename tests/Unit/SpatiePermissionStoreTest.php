@@ -2,29 +2,24 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
 use CoringaWc\FilamentAcl\FilamentPermissionManager;
 use CoringaWc\FilamentAcl\Support\SpatiePermissionStore;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 
-class SpatiePermissionStoreTest extends TestCase
-{
-    public function test_it_reads_models_and_panel_scope_from_configuration(): void
-    {
-        $manager = $this->appContainer()->make(FilamentPermissionManager::class);
-        $manager->registerPanel(
-            panelId: 'admin',
-            strictMode: true,
-            scopeRolesByPanel: true,
-            scopePermissionsByPanel: false,
-        );
+test('it reads models and panel scope from configuration', function () {
+    /** @var TestCase $this */
+    $manager = $this->appContainer()->make(FilamentPermissionManager::class);
+    $manager->registerPanel(
+        panelId: 'admin',
+        strictMode: true,
+        scopeRolesByPanel: true,
+        scopePermissionsByPanel: false,
+    );
 
-        $store = $this->appContainer()->make(SpatiePermissionStore::class);
+    $store = $this->appContainer()->make(SpatiePermissionStore::class);
 
-        self::assertSame(config('filament-acl.models.permission'), $store->getPermissionModel());
-        self::assertSame(config('filament-acl.models.role'), $store->getRoleModel());
-        self::assertTrue($store->scopesRolesByPanel('admin'));
-        self::assertFalse($store->scopesPermissionsByPanel('admin'));
-    }
-}
+    $this->assertSame(config('filament-acl.models.permission'), $store->getPermissionModel());
+    $this->assertSame(config('filament-acl.models.role'), $store->getRoleModel());
+    $this->assertTrue($store->scopesRolesByPanel('admin'));
+    $this->assertFalse($store->scopesPermissionsByPanel('admin'));
+});

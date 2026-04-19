@@ -34,7 +34,9 @@ class PermissionActionResolver
         }
 
         if (! class_exists($permissionAction)) {
-            return $permissionAction;
+            return $this->looksLikeOwnerClassReference($permissionAction)
+                ? null
+                : $permissionAction;
         }
 
         if (! Utils::shouldRegisterPermissionOwner($permissionAction)) {
@@ -87,5 +89,10 @@ class PermissionActionResolver
         } catch (BindingResolutionException) {
             return null;
         }
+    }
+
+    protected function looksLikeOwnerClassReference(string $permissionAction): bool
+    {
+        return str_contains(trim($permissionAction, '\\'), '\\');
     }
 }

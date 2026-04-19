@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-namespace CoringaWc\FilamentAcl\Tests\Unit;
-
 use CoringaWc\FilamentAcl\Attributes\CustomPermissionActions;
 use CoringaWc\FilamentAcl\Attributes\PermissionActions;
 use CoringaWc\FilamentAcl\Attributes\PermissionPanel;
@@ -13,90 +11,92 @@ use CoringaWc\FilamentAcl\Attributes\SharedPermissionOwner;
 use CoringaWc\FilamentAcl\Support\PermissionAttributeReader;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 
-class PermissionAttributeReaderTest extends TestCase
-{
-    public function test_read_returns_null_when_no_attribute_present(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithoutAttributes::class, PermissionSubject::class);
+test('read returns null when no attribute present', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithoutAttributes::class, PermissionSubject::class);
 
-        self::assertNull($result);
-    }
+    expect($result)->toBeNull();
+});
 
-    public function test_has_returns_false_when_no_attribute_present(): void
-    {
-        self::assertFalse(PermissionAttributeReader::has(ClassWithoutAttributes::class, PermissionSubject::class));
-    }
+test('has returns false when no attribute present', function (): void {
+    /** @var TestCase $this */
+    expect(PermissionAttributeReader::has(ClassWithoutAttributes::class, PermissionSubject::class))->toBeFalse();
+});
 
-    public function test_read_permission_subject_attribute(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithPermissionSubject::class, PermissionSubject::class);
+test('read permission subject attribute', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithPermissionSubject::class, PermissionSubject::class);
+    assert($result instanceof PermissionSubject);
 
-        self::assertInstanceOf(PermissionSubject::class, $result);
-        self::assertSame('custom-subject', $result->subject);
-    }
+    expect($result)->toBeInstanceOf(PermissionSubject::class)
+        ->and($result->subject)->toBe('custom-subject');
+});
 
-    public function test_has_returns_true_for_existing_attribute(): void
-    {
-        self::assertTrue(PermissionAttributeReader::has(ClassWithPermissionSubject::class, PermissionSubject::class));
-    }
+test('has returns true for existing attribute', function (): void {
+    /** @var TestCase $this */
+    expect(PermissionAttributeReader::has(ClassWithPermissionSubject::class, PermissionSubject::class))->toBeTrue();
+});
 
-    public function test_read_shared_permission_owner_attribute(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithSharedOwner::class, SharedPermissionOwner::class);
+test('read shared permission owner attribute', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithSharedOwner::class, SharedPermissionOwner::class);
+    assert($result instanceof SharedPermissionOwner);
 
-        self::assertInstanceOf(SharedPermissionOwner::class, $result);
-        self::assertSame(SharedPermissionOwnerTarget::class, $result->ownerClass);
-    }
+    expect($result)->toBeInstanceOf(SharedPermissionOwner::class)
+        ->and($result->ownerClass)->toBe(SharedPermissionOwnerTarget::class);
+});
 
-    public function test_read_custom_permission_actions_attribute(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithCustomActions::class, CustomPermissionActions::class);
+test('read custom permission actions attribute', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithCustomActions::class, CustomPermissionActions::class);
+    assert($result instanceof CustomPermissionActions);
 
-        self::assertInstanceOf(CustomPermissionActions::class, $result);
-        self::assertSame(['archive', 'export'], $result->actions);
-    }
+    expect($result)->toBeInstanceOf(CustomPermissionActions::class)
+        ->and($result->actions)->toBe(['archive', 'export']);
+});
 
-    public function test_read_permission_actions_attribute(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithPermissionActions::class, PermissionActions::class);
+test('read permission actions attribute', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithPermissionActions::class, PermissionActions::class);
+    assert($result instanceof PermissionActions);
 
-        self::assertInstanceOf(PermissionActions::class, $result);
-        self::assertSame(['view'], $result->actions);
-    }
+    expect($result)->toBeInstanceOf(PermissionActions::class)
+        ->and($result->actions)->toBe(['view']);
+});
 
-    public function test_read_register_permissions_false(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithRegisterPermissionsFalse::class, RegisterPermissions::class);
+test('read register permissions false', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithRegisterPermissionsFalse::class, RegisterPermissions::class);
+    assert($result instanceof RegisterPermissions);
 
-        self::assertInstanceOf(RegisterPermissions::class, $result);
-        self::assertFalse($result->register);
-    }
+    expect($result)->toBeInstanceOf(RegisterPermissions::class)
+        ->and($result->register)->toBeFalse();
+});
 
-    public function test_read_register_permissions_default_true(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithRegisterPermissionsDefault::class, RegisterPermissions::class);
+test('read register permissions default true', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithRegisterPermissionsDefault::class, RegisterPermissions::class);
+    assert($result instanceof RegisterPermissions);
 
-        self::assertInstanceOf(RegisterPermissions::class, $result);
-        self::assertTrue($result->register);
-    }
+    expect($result)->toBeInstanceOf(RegisterPermissions::class)
+        ->and($result->register)->toBeTrue();
+});
 
-    public function test_read_permission_panel_attribute(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithPermissionPanel::class, PermissionPanel::class);
+test('read permission panel attribute', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithPermissionPanel::class, PermissionPanel::class);
+    assert($result instanceof PermissionPanel);
 
-        self::assertInstanceOf(PermissionPanel::class, $result);
-        self::assertSame('admin', $result->panel);
-    }
+    expect($result)->toBeInstanceOf(PermissionPanel::class)
+        ->and($result->panel)->toBe('admin');
+});
 
-    public function test_read_does_not_return_unrelated_attribute(): void
-    {
-        $result = PermissionAttributeReader::read(ClassWithPermissionSubject::class, SharedPermissionOwner::class);
+test('read does not return unrelated attribute', function (): void {
+    /** @var TestCase $this */
+    $result = PermissionAttributeReader::read(ClassWithPermissionSubject::class, SharedPermissionOwner::class);
 
-        self::assertNull($result);
-    }
-}
-
-// Test fixture classes
+    expect($result)->toBeNull();
+});
 
 class ClassWithoutAttributes {}
 
