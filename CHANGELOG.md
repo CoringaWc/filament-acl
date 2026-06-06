@@ -2,6 +2,14 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.6 - 2026-06-06
+
+### Fixed
+
+- regenerated the PHPStan baseline and aligned a badge assertion to keep CI green under dependency drift (fresh installs without a committed `composer.lock`); republishes the v1.1.5 memoization fix under a clean, immutable tag
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.5...v1.1.6
+
 ## v1.1.5 - 2026-06-06
 
 ### Fixed
