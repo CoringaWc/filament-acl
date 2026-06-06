@@ -53,7 +53,10 @@ test('build relation manager tab sets label badge and icon', function () {
 
     $this->assertInstanceOf(Tab::class, $tab);
     $this->assertSame('Posts', $tab->getLabel());
-    $this->assertSame(2, $tab->getBadge());
+    // Filament normalizes badge values to strings in newer releases while older
+    // versions keep the integer, so compare loosely to stay green across the
+    // prefer-lowest and prefer-stable dependency matrices.
+    $this->assertEquals(2, $tab->getBadge());
     $this->assertSame(Heroicon::OutlinedDocumentText, $tab->getIcon());
 });
 test('relation manager permission actions include filament inherent actions and custom actions', function () {
