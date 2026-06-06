@@ -25,9 +25,22 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Spatie\Permission\Contracts\Role as RoleContract;
 use Throwable;
+use WeakMap;
 
 class Utils
 {
+    /**
+     * Per-request memoization of the protected-role panel check.
+     *
+     * Keyed by the authenticated user instance so entries are released as soon
+     * as that instance is garbage collected at the end of the request. Using a
+     * WeakMap (instead of a plain static array) prevents the cache from
+     * accumulating identities across long-running Octane/Swoole workers.
+     *
+     * @var WeakMap<object, array<string, bool>>|null
+     */
+    protected static ?WeakMap $protectedRoleForPanelCache = null;
+
     /**
      * @return class-string<Model>
      */
@@ -313,6 +326,34 @@ class Utils
             return false;
         }
 
+        // The protected-role check runs inside a Gate::before() hook, so it is
+        // evaluated for every authorization call (e.g. once per table row and
+        // action). The result only depends on the user instance and the panel,
+        // never on the authorized record, so memoize it per request to avoid an
+        // N+1 of identical role-existence and schema-introspection queries.
+        $cache = static::$protectedRoleForPanelCache ??= new WeakMap;
+        $cacheKey = $panelId ?? '';
+
+        $entries = $cache->offsetExists($user) ? $cache[$user] : [];
+
+        if (array_key_exists($cacheKey, $entries)) {
+            return $entries[$cacheKey];
+        }
+
+        $result = static::resolveUserHasProtectedRoleForPanel($user, $panelId);
+
+        $entries[$cacheKey] = $result;
+        $cache[$user] = $entries;
+
+        return $result;
+    }
+
+    /**
+     * Resolve the protected-role panel check against the database without any
+     * memoization. Callers should go through userHasProtectedRoleForPanel().
+     */
+    protected static function resolveUserHasProtectedRoleForPanel(mixed $user, ?string $panelId): bool
+    {
         try {
             $roleRelation = $user->roles();
         } catch (Throwable) {
@@ -337,6 +378,17 @@ class Utils
         } catch (Throwable) {
             return false;
         }
+    }
+
+    /**
+     * Clear the per-request protected-role memoization cache.
+     *
+     * Primarily useful in tests, or after assigning/removing the protected role
+     * to the currently authenticated user within the same request.
+     */
+    public static function flushProtectedRoleForPanelCache(): void
+    {
+        static::$protectedRoleForPanelCache = null;
     }
 
     public static function getPublishedConfigPath(): string

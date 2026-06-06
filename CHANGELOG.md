@@ -2,6 +2,14 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.5 - 2026-06-06
+
+### Fixed
+
+- memoized `Utils::userHasProtectedRoleForPanel()` per request with a `WeakMap` keyed by the authenticated user, eliminating an N+1 of identical role-existence and schema-introspection queries triggered by the `Gate::before()` hook on every authorization call (e.g. once per table row/action)
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.4...v1.1.5
+
 ## v1.1.4 - 2026-04-19
 
 **Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.3...v1.1.4
