@@ -2,6 +2,14 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.8 - 2026-06-18
+
+### Fixed
+
+- batch loaded permission options for all resource owners in the permissions form, removing the remaining per-owner permission option query pattern
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.7...v1.1.8
+
 ## v1.1.7 - 2026-06-18
 
 ### Fixed

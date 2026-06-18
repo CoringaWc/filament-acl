@@ -845,14 +845,26 @@ class PermissionResource extends Resource
             return [];
         }
 
+        $resourceRegistrations = static::ownerDiscovery()->discoverResources($panel);
+        $relationManagerRegistrationsByResource = [];
+        $optionOwnerRegistrations = [];
+
+        foreach ($resourceRegistrations as $resourceRegistration) {
+            $relationManagerRegistrations = static::ownerDiscovery()->discoverRelationManagers($panel, $resourceRegistration);
+
+            $optionOwnerRegistrations[] = $resourceRegistration;
+            array_push($optionOwnerRegistrations, ...$relationManagerRegistrations);
+            $relationManagerRegistrationsByResource[$resourceRegistration->uniqueKey()] = $relationManagerRegistrations;
+        }
+
+        $optionsByOwner = static::getOwnerPermissionOptionsForRegistrations($optionOwnerRegistrations);
+
         $nodes = [];
 
-        foreach (static::ownerDiscovery()->discoverResources($panel) as $resourceRegistration) {
+        foreach ($resourceRegistrations as $resourceRegistration) {
             /** @var class-string<resource> $resourceOwnerClass */
             $resourceOwnerClass = $resourceRegistration->ownerClass;
-            $options = static::getOwnerPermissionOptions(
-                ownerRegistration: $resourceRegistration,
-            );
+            $options = $optionsByOwner[$resourceRegistration->uniqueKey()] ?? [];
 
             if ($options === []) {
                 continue;
@@ -871,7 +883,10 @@ class PermissionResource extends Resource
                     $resourceRegistration->registrationKey,
                 ),
                 'options' => $options,
-                'relation_managers' => static::getRelationManagerNodes($resourceRegistration),
+                'relation_managers' => static::getRelationManagerNodes(
+                    $relationManagerRegistrationsByResource[$resourceRegistration->uniqueKey()] ?? [],
+                    $optionsByOwner,
+                ),
             ];
         }
 
@@ -879,22 +894,29 @@ class PermissionResource extends Resource
     }
 
     /**
+     * @param  PermissionOwnerRegistration|array<int, PermissionOwnerRegistration>  $relationManagerRegistrations
+     * @param  ?array<string, array<int|string, string>>  $optionsByOwner
      * @return array<int, array<string, mixed>>
      */
-    protected static function getRelationManagerNodes(PermissionOwnerRegistration $resourceRegistration): array
+    protected static function getRelationManagerNodes(PermissionOwnerRegistration | array $relationManagerRegistrations, ?array $optionsByOwner = null): array
     {
-        $panel = static::getManagedPanel();
+        if ($relationManagerRegistrations instanceof PermissionOwnerRegistration) {
+            $panel = static::getManagedPanel();
 
-        if (! $panel instanceof Panel) {
-            return [];
+            if (! $panel instanceof Panel) {
+                return [];
+            }
+
+            $relationManagerRegistrations = static::ownerDiscovery()->discoverRelationManagers($panel, $relationManagerRegistrations);
+            $optionsByOwner = static::getOwnerPermissionOptionsForRegistrations($relationManagerRegistrations);
         }
+
+        $optionsByOwner ??= static::getOwnerPermissionOptionsForRegistrations($relationManagerRegistrations);
 
         $nodes = [];
 
-        foreach (static::ownerDiscovery()->discoverRelationManagers($panel, $resourceRegistration) as $relationManagerRegistration) {
-            $options = static::getOwnerPermissionOptions(
-                ownerRegistration: $relationManagerRegistration,
-            );
+        foreach ($relationManagerRegistrations as $relationManagerRegistration) {
+            $options = $optionsByOwner[$relationManagerRegistration->uniqueKey()] ?? [];
 
             if ($options === []) {
                 continue;
@@ -1246,6 +1268,104 @@ class PermissionResource extends Resource
     protected static function getOwnerPermissionOptions(
         PermissionOwnerRegistration $ownerRegistration,
     ): array {
+        return static::getOwnerPermissionOptionsForRegistrations([$ownerRegistration])[$ownerRegistration->uniqueKey()] ?? [];
+    }
+
+    /**
+     * @param  array<int, PermissionOwnerRegistration>  $ownerRegistrations
+     * @return array<string, array<int|string, string>>
+     */
+    protected static function getOwnerPermissionOptionsForRegistrations(array $ownerRegistrations): array
+    {
+        if ($ownerRegistrations === []) {
+            return [];
+        }
+
+        $permissionNamesByOwner = [];
+
+        foreach ($ownerRegistrations as $ownerRegistration) {
+            $permissionNames = static::getOwnerPermissionNames($ownerRegistration);
+
+            if ($permissionNames === []) {
+                continue;
+            }
+
+            $permissionNamesByOwner[$ownerRegistration->uniqueKey()] = $permissionNames;
+        }
+
+        if ($permissionNamesByOwner === []) {
+            return [];
+        }
+
+        /** @var class-string<Model> $permissionModel */
+        $permissionModel = app(StoresPermissions::class)->getPermissionModel();
+        $shouldScopeToPanel = static::shouldScopePermissionsToCurrentPanel();
+        $panelColumn = $shouldScopeToPanel ? static::getPanelColumnName() : null;
+        $panelScopeValue = $shouldScopeToPanel ? static::resolveCurrentPanelScopeValue() : null;
+
+        return app(PermissionOptionCache::class)->rememberManyOwnerOptions(
+            ownerRegistrations: $ownerRegistrations,
+            permissionModel: $permissionModel,
+            permissionNamesByOwner: $permissionNamesByOwner,
+            panelColumn: $panelColumn,
+            panelScopeValue: $panelScopeValue,
+            callback: static function (array $missingOwnerRegistrations, array $missingPermissionNamesByOwner) use ($permissionModel, $panelColumn, $panelScopeValue): array {
+                $permissionNames = [];
+
+                foreach ($missingPermissionNamesByOwner as $ownerPermissionNames) {
+                    $permissionNames = [
+                        ...$permissionNames,
+                        ...array_values($ownerPermissionNames),
+                    ];
+                }
+
+                $permissionNames = array_values(array_unique($permissionNames));
+                $query = $permissionModel::query()
+                    ->whereIn('name', $permissionNames)
+                    ->orderBy('name');
+
+                if ($panelColumn !== null && $panelScopeValue !== null) {
+                    $query->where($panelColumn, $panelScopeValue);
+                }
+
+                $permissionsByName = [];
+
+                foreach ($query->get() as $permission) {
+                    /** @var Model $permission */
+                    $permissionsByName[(string) $permission->getAttribute('name')] = $permission;
+                }
+
+                $optionsByOwner = [];
+
+                foreach ($missingOwnerRegistrations as $ownerRegistration) {
+                    $ownerKey = $ownerRegistration->uniqueKey();
+                    $ownerPermissionNames = $missingPermissionNamesByOwner[$ownerKey] ?? [];
+                    /** @var array<int|string, string> $options */
+                    $options = [];
+
+                    foreach ($permissionsByName as $permissionName => $permission) {
+                        $ability = array_search($permissionName, $ownerPermissionNames, true);
+
+                        if (! is_string($ability)) {
+                            continue;
+                        }
+
+                        $options[$permission->getKey()] = static::resolveAbilityLabel($ability);
+                    }
+
+                    $optionsByOwner[$ownerKey] = $options;
+                }
+
+                return $optionsByOwner;
+            },
+        );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected static function getOwnerPermissionNames(PermissionOwnerRegistration $ownerRegistration): array
+    {
         $permissionNames = [];
 
         foreach (static::resolveOwnerAbilities($ownerRegistration) as $ability) {
@@ -1259,45 +1379,7 @@ class PermissionResource extends Resource
             return [];
         }
 
-        /** @var class-string<Model> $permissionModel */
-        $permissionModel = app(StoresPermissions::class)->getPermissionModel();
-        $shouldScopeToPanel = static::shouldScopePermissionsToCurrentPanel();
-        $panelColumn = $shouldScopeToPanel ? static::getPanelColumnName() : null;
-        $panelScopeValue = $shouldScopeToPanel ? static::resolveCurrentPanelScopeValue() : null;
-
-        return app(PermissionOptionCache::class)->rememberOwnerOptions(
-            ownerRegistration: $ownerRegistration,
-            permissionModel: $permissionModel,
-            permissionNames: $permissionNames,
-            panelColumn: $panelColumn,
-            panelScopeValue: $panelScopeValue,
-            callback: static function () use ($permissionModel, $permissionNames, $panelColumn, $panelScopeValue): array {
-                $query = $permissionModel::query()
-                    ->whereIn('name', array_values($permissionNames))
-                    ->orderBy('name');
-
-                if ($panelColumn !== null && $panelScopeValue !== null) {
-                    $query->where($panelColumn, $panelScopeValue);
-                }
-
-                /** @var array<int|string, string> $options */
-                $options = [];
-
-                foreach ($query->get() as $permission) {
-                    /** @var Model $permission */
-                    $permissionName = (string) $permission->getAttribute('name');
-                    $ability = array_search($permissionName, $permissionNames, true);
-
-                    if (! is_string($ability)) {
-                        continue;
-                    }
-
-                    $options[$permission->getKey()] = static::resolveAbilityLabel($ability);
-                }
-
-                return $options;
-            },
-        );
+        return $permissionNames;
     }
 
     /**
