@@ -2,6 +2,14 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.7 - 2026-06-18
+
+### Fixed
+
+- memoized permission option loading per owner within the request lifecycle, removing repeated `permissions` lookups when rendering the permission create/edit forms
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.6...v1.1.7
+
 ## v1.1.6 - 2026-06-06
 
 ### Fixed

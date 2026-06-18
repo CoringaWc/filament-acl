@@ -12,6 +12,7 @@ use CoringaWc\FilamentAcl\FilamentAclPlugin;
 use CoringaWc\FilamentAcl\FilamentPermissionManager;
 use CoringaWc\FilamentAcl\Resources\Concerns\HasResourcePermissions;
 use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
+use CoringaWc\FilamentAcl\Support\PermissionOptionCache;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerRegistration;
 use CoringaWc\FilamentAcl\Support\Utils;
@@ -1258,31 +1259,45 @@ class PermissionResource extends Resource
             return [];
         }
 
+        /** @var class-string<Model> $permissionModel */
         $permissionModel = app(StoresPermissions::class)->getPermissionModel();
-        $query = $permissionModel::query()
-            ->whereIn('name', array_values($permissionNames))
-            ->orderBy('name');
+        $shouldScopeToPanel = static::shouldScopePermissionsToCurrentPanel();
+        $panelColumn = $shouldScopeToPanel ? static::getPanelColumnName() : null;
+        $panelScopeValue = $shouldScopeToPanel ? static::resolveCurrentPanelScopeValue() : null;
 
-        if (static::shouldScopePermissionsToCurrentPanel()) {
-            $query->where(static::getPanelColumnName(), static::resolveCurrentPanelScopeValue());
-        }
+        return app(PermissionOptionCache::class)->rememberOwnerOptions(
+            ownerRegistration: $ownerRegistration,
+            permissionModel: $permissionModel,
+            permissionNames: $permissionNames,
+            panelColumn: $panelColumn,
+            panelScopeValue: $panelScopeValue,
+            callback: static function () use ($permissionModel, $permissionNames, $panelColumn, $panelScopeValue): array {
+                $query = $permissionModel::query()
+                    ->whereIn('name', array_values($permissionNames))
+                    ->orderBy('name');
 
-        /** @var array<int|string, string> $options */
-        $options = [];
+                if ($panelColumn !== null && $panelScopeValue !== null) {
+                    $query->where($panelColumn, $panelScopeValue);
+                }
 
-        foreach ($query->get() as $permission) {
-            /** @var Model $permission */
-            $permissionName = (string) $permission->getAttribute('name');
-            $ability = array_search($permissionName, $permissionNames, true);
+                /** @var array<int|string, string> $options */
+                $options = [];
 
-            if (! is_string($ability)) {
-                continue;
-            }
+                foreach ($query->get() as $permission) {
+                    /** @var Model $permission */
+                    $permissionName = (string) $permission->getAttribute('name');
+                    $ability = array_search($permissionName, $permissionNames, true);
 
-            $options[$permission->getKey()] = static::resolveAbilityLabel($ability);
-        }
+                    if (! is_string($ability)) {
+                        continue;
+                    }
 
-        return $options;
+                    $options[$permission->getKey()] = static::resolveAbilityLabel($ability);
+                }
+
+                return $options;
+            },
+        );
     }
 
     /**

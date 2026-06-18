@@ -13,6 +13,7 @@ use CoringaWc\FilamentAcl\Support\DefaultPermissionActionRegistry;
 use CoringaWc\FilamentAcl\Support\DefaultPermissionKeyBuilder;
 use CoringaWc\FilamentAcl\Support\PermissionActionResolver;
 use CoringaWc\FilamentAcl\Support\PermissionGate;
+use CoringaWc\FilamentAcl\Support\PermissionOptionCache;
 use CoringaWc\FilamentAcl\Support\PermissionOwnerDiscovery;
 use CoringaWc\FilamentAcl\Support\SpatiePermissionStore;
 use CoringaWc\FilamentAcl\Support\Utils;
@@ -50,6 +51,7 @@ class FilamentPermissionServiceProvider extends PackageServiceProvider
         $this->app->singleton(PermissionOwnerDiscovery::class);
         $this->app->singleton(PermissionActionResolver::class);
         $this->app->singleton(PermissionGate::class);
+        $this->app->scoped(PermissionOptionCache::class);
         $this->app->singleton(SpatiePermissionStore::class);
         $this->app->alias(FilamentPermissionManager::class, 'filament-acl.permission-manager');
     }
