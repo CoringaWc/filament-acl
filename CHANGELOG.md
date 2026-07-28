@@ -2,6 +2,18 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v1.1.9 - 2026-07-28
+
+### What's Changed
+
+* feat: distribute Laravel Boost guidance by @CoringaWc in https://github.com/CoringaWc/filament-acl/pull/5
+
+### New Contributors
+
+* @CoringaWc made their first contribution in https://github.com/CoringaWc/filament-acl/pull/5
+
+**Full Changelog**: https://github.com/CoringaWc/filament-acl/compare/v1.1.8...v1.1.9
+
 ## v1.1.8 - 2026-06-18
 
 ### Fixed
