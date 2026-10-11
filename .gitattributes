@@ -36,3 +36,8 @@
 /tests                  export-ignore
 /UPGRADING.md           export-ignore
 /workbench              export-ignore
+
+# Boost 2.4 formats headings before normalizing CRLF; keep source Markdown portable.
+/resources/boost/**     text eol=lf
+/UPGRADING.md           text eol=lf
+/scripts/*.sh           text eol=lf
