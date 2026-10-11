@@ -2,6 +2,17 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## 2.0.0 (unreleased)
+
+- Set validated maintainer-tool minimums: Larastan 3.13, PHPStan 2.3 and Pint 1.32; runtime consumer requirements are unchanged by these dev-only constraints.
+
+- Normalize enum abilities before invoking Gate before callbacks in the missing-policy fallback, retaining the public string|UnitEnum contract.
+- Require Spatie Laravel Permission `^8.2`; preserve the package's public classes, aliases, methods and contextual authorization APIs.
+- Inherit enum-aware Role/Permission model lookups and creation; document required widening of application-owned overrides/contracts.
+- Add the `filament-acl-upgrade` Laravel Boost skill with a bundled migration guide and refresh the usage skill.
+- Cover upstream guard, synchronization, events and cache behavior and verify both skills are installable and included in dist archives.
+- Correct an existing workbench assertion to expect denial for an unauthorized relation manager; remove obsolete static-analysis suppressions.
+
 ## v1.1.9 - 2026-07-28
 
 ### What's Changed

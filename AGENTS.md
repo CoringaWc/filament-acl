@@ -4,7 +4,7 @@
 
 This repository contains the `coringawc/filament-acl` package.
 
-The package solves contextual authorization for Filament v4 or v5 by treating the Filament owner as the permission subject:
+The package solves contextual authorization for Filament v5 by treating the Filament owner as the permission subject:
 
 - `Resource`
 - `RelationManager`
@@ -505,3 +505,11 @@ Whenever you change public API, review these README sections:
 - workbench usage
 
 If you add new behavior that future agents need in order to work safely, update this file too.
+
+## Spatie v8 and Boost distribution
+
+The planned 2.x major requires Spatie Laravel Permission ^8.2. Keep the empty package Role/Permission subclasses and inherited BackedEnum|string lookup signatures; application-owned overrides must be widened only when incompatible. Preserve syncPermissions/syncRoles, guards, protected roles and panel scope. Permission detach events during sync begin in Spatie 8.2; registrar collection invalidation on initializeCache begins in 8.3. Test minimum and current versions separately.
+
+Both Boost skills must remain under resources/boost/skills. Keep the human UPGRADING.md synchronized with filament-acl-upgrade/references/migration.md because /UPGRADING.md and /docs are export-ignored. Run `bash scripts/verify-boost-distribution.sh HEAD` on committed trees (or pass a prepared Git tree for local uncommitted validation). Check installed boost command help before documenting discovery flags/defaults.
+
+Quality-tool minimums for 2.x are Larastan 3.13, PHPStan 2.3, and Pint 1.32. The former loose dev constraints selected Larastan 3.1/PHPStan 2.1 and Pint 1.0, which do not reliably model/format the existing Laravel/Filament/PHP 8.3+ code. Keep these dev-only floors under minimum/current matrix checks; do not suppress diagnostics to support obsolete tools. Runtime requirements are unaffected.

@@ -68,7 +68,7 @@ final class PermissionGate
         /** @var bool|Response|null $response */
         $response = invade(Gate::forUser($user))->callBeforeCallbacks( /** @phpstan-ignore-line */
             $user,
-            $ability,
+            $abilityValue,
             $gateArguments,
         );
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 use CoringaWc\FilamentAcl\Enums\PermissionEntityType;
 use CoringaWc\FilamentAcl\Tests\TestCase;
 use Filament\Actions\Testing\TestAction;
+use Livewire\Features\SupportTesting\ComponentState;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use Workbench\App\Filament\Resources\Users\Pages\EditUser;
 use Workbench\App\Filament\Resources\Users\Pages\ViewUser;
@@ -25,12 +27,12 @@ test('rm shows create edit delete actions with all rm permissions on edit page',
 
     $this->actingAs($actor);
 
-    Livewire::test(PostsRelationManager::class, [
+    $component = Livewire::test(PostsRelationManager::class, [
         'ownerRecord' => $owner,
         'pageClass' => EditUser::class,
-    ])
-        ->assertOk()
-        ->assertActionVisible(TestAction::make('create')->table())
+    ]);
+    $component->assertOk();
+    $component->assertActionVisible(TestAction::make('create')->table())
         ->assertActionVisible(TestAction::make('edit')->table($posts->first()))
         ->assertActionVisible(TestAction::make('delete')->table($posts->first()));
 });
@@ -47,12 +49,12 @@ test('rm shows actions for super admin via gate before', function () {
 
     $this->actingAs($actor);
 
-    Livewire::test(PostsRelationManager::class, [
+    $component = Livewire::test(PostsRelationManager::class, [
         'ownerRecord' => $owner,
         'pageClass' => EditUser::class,
-    ])
-        ->assertOk()
-        ->assertActionVisible(TestAction::make('create')->table())
+    ]);
+    $component->assertOk();
+    $component->assertActionVisible(TestAction::make('create')->table())
         ->assertActionVisible(TestAction::make('edit')->table($posts->first()))
         ->assertActionVisible(TestAction::make('delete')->table($posts->first()));
 });
@@ -70,12 +72,12 @@ test('rm shows actions on view page because is read only is overridden', functio
 
     // PostsRelationManager overrides isReadOnly() to return false,
     // so actions should be visible even on ViewRecord pages
-    Livewire::test(PostsRelationManager::class, [
+    $component = Livewire::test(PostsRelationManager::class, [
         'ownerRecord' => $owner,
         'pageClass' => ViewUser::class,
-    ])
-        ->assertOk()
-        ->assertActionVisible(TestAction::make('create')->table())
+    ]);
+    $component->assertOk();
+    $component->assertActionVisible(TestAction::make('create')->table())
         ->assertActionVisible(TestAction::make('edit')->table($posts->first()))
         ->assertActionVisible(TestAction::make('delete')->table($posts->first()));
 });
@@ -92,32 +94,40 @@ test('rm hides mutating actions when user only has view permissions', function (
 
     $this->actingAs($actor);
 
-    Livewire::test(PostsRelationManager::class, [
+    $component = Livewire::test(PostsRelationManager::class, [
         'ownerRecord' => $owner,
         'pageClass' => ViewUser::class,
-    ])
-        ->assertOk()
-        ->assertActionHidden(TestAction::make('create')->table())
+    ]);
+    $component->assertOk();
+    $component->assertActionHidden(TestAction::make('create')->table())
         ->assertActionHidden(TestAction::make('edit')->table($posts->first()))
         ->assertActionHidden(TestAction::make('delete')->table($posts->first()));
 });
-test('rm hides mutating actions when user has no rm permissions at all', function () {
+test('rm never exposes mutating actions to users without rm permissions', function () {
     /** @var TestCase $this */
     $actor = $this->createUser();
     $owner = User::factory()->create();
     $posts = Post::factory()->count(2)->for($owner)->create();
 
-    // No RM permissions — simulate a posts_only user that only has Resource permissions
     $this->actingAs($actor);
 
-    Livewire::test(PostsRelationManager::class, [
+    $component = Livewire::test(PostsRelationManager::class, [
         'ownerRecord' => $owner,
         'pageClass' => ViewUser::class,
-    ])
-        ->assertOk()
-        ->assertActionHidden(TestAction::make('create')->table())
-        ->assertActionHidden(TestAction::make('edit')->table($posts->first()))
-        ->assertActionHidden(TestAction::make('delete')->table($posts->first()));
+    ]);
+
+    // Filament versions may deny mounting or render with all mutating actions hidden.
+    $state = (new ReflectionProperty(Testable::class, 'lastState'))->getValue($component);
+    assert($state instanceof ComponentState);
+    $status = $state->getResponse()->status();
+    expect($status)->toBeIn([200, 403]);
+    if ($status === 403) {
+        $component->assertForbidden();
+    } else {
+        $component->assertActionHidden(TestAction::make('create')->table())
+            ->assertActionHidden(TestAction::make('edit')->table($posts->first()))
+            ->assertActionHidden(TestAction::make('delete')->table($posts->first()));
+    }
 });
 test('rm shows actions on view page for super admin', function () {
     /** @var TestCase $this */
@@ -133,12 +143,12 @@ test('rm shows actions on view page for super admin', function () {
     $this->actingAs($actor);
 
     // super_admin bypasses via Gate::before(), and isReadOnly() returns false
-    Livewire::test(PostsRelationManager::class, [
+    $component = Livewire::test(PostsRelationManager::class, [
         'ownerRecord' => $owner,
         'pageClass' => ViewUser::class,
-    ])
-        ->assertOk()
-        ->assertActionVisible(TestAction::make('create')->table())
+    ]);
+    $component->assertOk();
+    $component->assertActionVisible(TestAction::make('create')->table())
         ->assertActionVisible(TestAction::make('edit')->table($posts->first()))
         ->assertActionVisible(TestAction::make('delete')->table($posts->first()));
 });

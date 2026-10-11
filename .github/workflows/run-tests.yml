@@ -16,13 +16,14 @@ jobs:
         php: [8.4, 8.3]
         laravel: [12.*]
         stability: [prefer-lowest, prefer-stable]
+        spatie: [8.2.*, ^8.2]
         include:
           - laravel: 12.*
             testbench: 10.*
             carbon: 3.*
             collision: 8.*
 
-    name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
+    name: P${{ matrix.php }} - L${{ matrix.laravel }} - S${{ matrix.spatie }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -42,7 +43,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.carbon }}" --no-interaction --no-update
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.carbon }}" "spatie/laravel-permission:${{ matrix.spatie }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: List Installed Dependencies
@@ -50,3 +51,13 @@ jobs:
 
       - name: Execute tests
         run: vendor/bin/pest --ci
+
+      - name: Analyse types
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
+      - name: Verify formatting
+        run: vendor/bin/pint --test
+
+      - name: Verify distributed Boost skills
+        shell: bash
+        run: bash scripts/verify-boost-distribution.sh HEAD
