@@ -9,3 +9,5 @@ Use `coringawc/filament-acl` for contextual permissions owned by Filament resour
 - Keep application-specific business authorization outside the package permission infrastructure.
 
 When implementing or reviewing Filament ACL integration, activate the `filament-acl` skill for the package contracts, examples, and verification checklist.
+
+For a major upgrade to Filament ACL 2.x / Spatie Laravel Permission v8, activate the `filament-acl-upgrade` skill and read its bundled migration guide. Keep compatible custom model signatures, sync events, guards, cache, panel scope, and protected-role behavior under regression coverage.

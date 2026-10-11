@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use CoringaWc\FilamentAcl\FilamentPermissionManager;
 use CoringaWc\FilamentAcl\Support\PermissionGate;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePolicyWithoutUpdate;
 use CoringaWc\FilamentAcl\Tests\Fixtures\FakePost;
@@ -94,3 +95,33 @@ test('it can inspect existing policy methods with contextual arguments', functio
 
     $this->assertTrue($response->allowed());
 });
+
+enum AclUnitAbility
+{
+    case archive;
+}
+
+enum AclBackedAbility: string
+{
+    case Archive = 'archive';
+}
+
+foreach ([AclUnitAbility::archive, AclBackedAbility::Archive] as $ability) {
+    test('it normalizes enum abilities for before callbacks without a policy ' . $ability::class, function () use ($ability): void {
+        $manager = app(FilamentPermissionManager::class);
+        $manager->registerPanel('admin', strictMode: false, scopeRolesByPanel: false, scopePermissionsByPanel: false);
+        $seen = null;
+        Gate::before(function ($user, string $abilityName) use (&$seen): bool {
+            $seen = $abilityName;
+
+            return false;
+        });
+        $response = app(PermissionGate::class)->inspect(
+            user: new FakeUser,
+            ability: $ability,
+            target: FakePost::class,
+            action: null,
+        );
+        expect($response->denied())->toBeTrue()->and($seen)->toBe('archive');
+    });
+}

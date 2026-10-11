@@ -1,9 +1,13 @@
 ---
 name: filament-acl
-description: Configure, extend, test, or troubleshoot coringawc/filament-acl contextual permissions for Filament resources, relation managers, pages, widgets, policies, roles, and custom permissions. Use when a Laravel application installs or changes this package.
+description: Configure, extend, test, or troubleshoot coringawc/filament-acl contextual permissions for Filament resources, relation managers, pages, widgets, policies, roles, and custom permissions. Use when a Laravel application configures or troubleshoots this package. For a major version migration, use filament-acl-upgrade.
 ---
 
 # Filament ACL
+
+## Supported dependencies
+
+For Filament ACL 2.x, inspect the installed Composer versions: PHP ^8.3, Filament ^5.0, Spatie Laravel Permission ^8.2. The package matrix targets Laravel 12; do not infer Laravel 13 verification from upstream support. Package Role and Permission extend Spatie and inherit `findByName(BackedEnum|string $name, ?string $guardName = null)` and `findOrCreate(...)`. Keep custom overrides compatible with their upstream return contracts. Prefer string-backed enums for permission and role names.
 
 ## Use the package contract
 
@@ -66,3 +70,7 @@ Override package behavior through container bindings for `ResolvesPermissionSubj
 - Test owner discovery, generated permission keys, policy decisions, panel scope, shared owners, and protected roles affected by the change.
 - Run the consuming application's focused tests after synchronization-related changes.
 - Confirm translated labels use the package translation keys and that custom permission labels are translation keys rather than hard-coded UI text.
+
+## Cache and events
+
+Preserve `syncPermissions()` and `syncRoles()` so Spatie retains guard validation, fluent return values, cache invalidation and configured events. In Spatie v8.2+, syncing permissions emits detach events for removed assignments when `permission.events_enabled` is true. Review listeners for idempotency and side effects. Use `permission:cache-reset` after a deployment; reload affected user relations and restart long-running workers through the application's deployment process. Do not replace Spatie operations with raw pivot writes.

@@ -5,7 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/coringawc/filament-acl/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/coringawc/filament-acl/actions?query=workflow%3A%22Fix+PHP+code+styling%22+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/coringawc/filament-acl.svg?style=flat-square)](https://packagist.org/packages/coringawc/filament-acl)
 
-`coringawc/filament-acl` is a Filament v4 or v5 plugin for permission systems that are driven by `Resource`, `RelationManager`, `Page`, and `Widget` ownership instead of model-derived subjects.
+`coringawc/filament-acl` is a Filament v5 plugin for permission systems that are driven by `Resource`, `RelationManager`, `Page`, and `Widget` ownership instead of model-derived subjects.
 
 It was designed for complex panels where the same Eloquent model can appear in many different UI contexts and each context may need a different permission namespace.
 
@@ -32,10 +32,12 @@ It was designed for complex panels where the same Eloquent model can appear in m
 
 ## Requirements
 
-- PHP 8.4+
-- Laravel 12+
-- Filament v4 and v5
-- Spatie Laravel Permission
+- PHP 8.3+
+- Laravel 12 (the package test matrix)
+- Filament v5 (`^5.0`)
+- Spatie Laravel Permission v8 (`^8.2`)
+
+This is the 2.x major for Spatie Laravel Permission v8. For upgrading from 1.x, follow [the migration guide](resources/boost/skills/filament-acl-upgrade/references/migration.md). The guide is also distributed at `resources/boost/skills/filament-acl-upgrade/references/migration.md`. Laravel 13 support in Spatie does not imply Laravel 13 has been tested with this package.
 
 ## Installation
 
@@ -1057,3 +1059,9 @@ Please review [our security policy](.github/SECURITY.md) on how to report securi
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
+## Laravel Boost skills
+
+The package distributes two skills: `filament-acl` for application integration and `filament-acl-upgrade` for migration from 1.x / Spatie v7 to 2.x / Spatie v8. Both include all required local references in Composer archives.
+
+With Laravel Boost installed as a development dependency, run `php artisan boost:install` and select this package and the desired skills. For existing installations, run `php artisan boost:update`. Check `php artisan help boost:update` before using `--discover`; its availability and default behavior depend on the installed Boost version. If the new upgrade skill is not offered, run `boost:install` again and review the selected package/skills. Keep application-owned custom skills and generated instruction changes under review.
