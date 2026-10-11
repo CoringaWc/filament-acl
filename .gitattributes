@@ -41,3 +41,6 @@
 /resources/boost/**     text eol=lf
 /UPGRADING.md           text eol=lf
 /scripts/*.sh           text eol=lf
+
+# Pint enforces LF for PHP on every supported development OS.
+*.php                   text eol=lf
