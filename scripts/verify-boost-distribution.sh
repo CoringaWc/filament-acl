@@ -18,5 +18,5 @@ if tar -tf "$archive" | grep -E '^(docs/|UPGRADING.md$)' > /dev/null; then
     echo 'Development-only upgrade/docs files unexpectedly included' >&2
     exit 1
 fi
-tar -xOf "$archive" resources/boost/skills/filament-acl-upgrade/references/migration.md | cmp - UPGRADING.md
+cmp <(tar -xOf "$archive" resources/boost/skills/filament-acl-upgrade/references/migration.md) <(git show "$revision:UPGRADING.md")
 echo 'Both Boost skills and the migration reference are included in the distribution.'

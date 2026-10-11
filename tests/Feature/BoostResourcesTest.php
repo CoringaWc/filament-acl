@@ -53,8 +53,8 @@ test('Boost discovers parses and installs both skill directories with their refe
         expect($result)->toBe(['filament-acl' => SkillWriter::SUCCESS, 'filament-acl-upgrade' => SkillWriter::SUCCESS])
             ->and(base_path($relativePath . '/filament-acl/SKILL.md'))->toBeFile()
             ->and(base_path($relativePath . '/filament-acl-upgrade/SKILL.md'))->toBeFile()
-            ->and(trim((string) file_get_contents(base_path($relativePath . '/filament-acl-upgrade/references/migration.md'))))
-            ->toBe(trim((string) file_get_contents(dirname(__DIR__, 2) . '/UPGRADING.md')));
+            ->and(trim(str_replace(["\r\n", "\r"], "\n", (string) file_get_contents(base_path($relativePath . '/filament-acl-upgrade/references/migration.md')))))
+            ->toBe(trim(str_replace(["\r\n", "\r"], "\n", (string) file_get_contents(dirname(__DIR__, 2) . '/UPGRADING.md'))));
     } finally {
         File::deleteDirectory(base_path($relativePath));
     }
