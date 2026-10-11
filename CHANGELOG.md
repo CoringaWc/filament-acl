@@ -2,6 +2,12 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
+## v2.0.1 - 2026-10-11
+
+- Pin every third-party GitHub Action to its verified commit SHA; update checkout, Dependabot metadata and Composer install actions to the versions proposed by the existing dependency PRs.
+- Configure explicit three-day version-update cooldowns and weekly Composer dependency monitoring alongside GitHub Actions monitoring; security updates remain unaffected.
+- Preserve all package runtime requirements, public APIs, authorization behavior and the complete test matrix.
+
 ## v2.0.0 - 2026-10-11
 
 - Set validated maintainer-tool minimums: Larastan 3.13, PHPStan 2.3 and Pint 1.32; runtime consumer requirements are unchanged by these dev-only constraints.
