@@ -1,6 +1,6 @@
 # Upgrading Filament ACL 1.x to 2.x
 
-This planned major changes the required Spatie Laravel Permission version from `^7.0` to `^8.2`. It retains PHP `^8.3` and Filament `^5.0`. Laravel 12 is the package CI target. Do not treat Spatie's Laravel 13 support as proof that this package or your application was tested on Laravel 13. A 2.x release is not published by preparing this branch.
+This major changes the required Spatie Laravel Permission version from `^7.0` to `^8.2`. It retains PHP `^8.3` and Filament `^5.0`. Laravel 12 is the package CI target. Do not treat Spatie's Laravel 13 support as proof that this package or your application was tested on Laravel 13. Use a tagged 2.x release for production upgrades.
 
 The minimum is **8.2**, rather than 8.0: regression tests reproduced cross-team deletion with custom pivots in Spatie 8.0 for removeRole, syncRoles, revokePermissionTo and syncPermissions. The 8.2 upstream fixes preserve the other team's assignments. This is a data-isolation requirement, not a renamed API or new package feature.
 
@@ -10,13 +10,13 @@ Record installed versions with `composer show coringawc/filament-acl`, `composer
 
 ## Required dependency change
 
-After a 2.x release is available, set `coringawc/filament-acl` to `^2.0`. If your application directly requires Spatie, change that constraint to `^8.2` too. Then run:
+Set `coringawc/filament-acl` to `^2.0`. If your application directly requires Spatie, change that constraint to `^8.2` too. Then run:
 
 ```bash
 composer update coringawc/filament-acl spatie/laravel-permission --with-all-dependencies
 ```
 
-Review the lockfile before deployment. During development of this branch use an explicitly configured local/path repository; do not expect an unpublished `^2.0` version to resolve from Packagist.
+Review the lockfile before deployment. For unreleased development branches use an explicitly configured local/path repository; a production `^2.0` constraint resolves published releases.
 
 ## Custom model and contract signatures
 

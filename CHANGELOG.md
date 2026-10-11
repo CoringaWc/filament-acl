@@ -2,7 +2,7 @@
 
 All notable changes to `filament-acl` will be documented in this file.
 
-## 2.0.0 (unreleased)
+## v2.0.0 - 2026-10-11
 
 - Set validated maintainer-tool minimums: Larastan 3.13, PHPStan 2.3 and Pint 1.32; runtime consumer requirements are unchanged by these dev-only constraints.
 
