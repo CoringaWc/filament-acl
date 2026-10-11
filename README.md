@@ -37,7 +37,7 @@ It was designed for complex panels where the same Eloquent model can appear in m
 - Filament v5 (`^5.0`)
 - Spatie Laravel Permission v8 (`^8.2`)
 
-This is the planned 2.x major. For upgrading from 1.x, follow [UPGRADING.md](UPGRADING.md). The guide is also distributed at `resources/boost/skills/filament-acl-upgrade/references/migration.md`. Laravel 13 support in Spatie does not imply Laravel 13 has been tested with this package.
+This is the planned 2.x major. For upgrading from 1.x, follow [the migration guide](resources/boost/skills/filament-acl-upgrade/references/migration.md). The guide is also distributed at `resources/boost/skills/filament-acl-upgrade/references/migration.md`. Laravel 13 support in Spatie does not imply Laravel 13 has been tested with this package.
 
 ## Installation
 

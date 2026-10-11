@@ -79,6 +79,9 @@ foreach ([false, true] as $eventsEnabled) {
         app(PermissionRegistrar::class)->getPermissions();
         expect(cache()->store('array')->has('spatie.permission.cache'))->toBeTrue();
 
+        // Discard arrangement events so assertions cover only synchronization.
+        Event::fake([PermissionAttachedEvent::class, PermissionDetachedEvent::class, RoleAttachedEvent::class, RoleDetachedEvent::class]);
+
         expect($reader->syncPermissions(V8PermissionName::Write))->toBe($reader)
             ->and(cache()->store('array')->has('spatie.permission.cache'))->toBeFalse()
             ->and($user->fresh()?->hasPermissionTo(V8PermissionName::Read))->toBeFalse()

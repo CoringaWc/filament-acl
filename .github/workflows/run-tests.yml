@@ -53,7 +53,8 @@ jobs:
         run: vendor/bin/pest --ci
 
       - name: Analyse types
-        run: vendor/bin/phpstan analyse --memory-limit=1G
+        # Windows cannot atomically replace Testbench's shared cache from parallel workers.
+        run: vendor/bin/phpstan analyse --memory-limit=1G ${{ matrix.os == 'windows-latest' && '--debug' || '' }}
 
       - name: Verify formatting
         run: vendor/bin/pint --test
